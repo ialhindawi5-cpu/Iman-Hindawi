@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard · Iman Hindawi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <!-- Login -->
+  <div class="login-screen" id="loginScreen">
+    <form class="login-card" id="loginForm">
+      <h1>Dashboard</h1>
+      <p>Sign in to edit the website.</p>
+      <input type="email" id="loginEmail" placeholder="Email" autocomplete="username" required />
+      <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required />
+      <button type="submit">Sign in</button>
+      <span class="form-error" id="loginError"></span>
+      <button type="button" class="link-btn" id="forgotBtn">Forgot password?</button>
+    </form>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="dash" id="dash" hidden>
+    <!-- Mobile top bar -->
+    <div class="topbar">
+      <button class="hamburger" id="hamburger" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+      <span class="topbar-title">Iman Hindawi</span>
+      <button class="btn primary small" id="saveBtnMobile">Save</button>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="side-brand">
+        <span class="dash-kicker">Content Manager</span>
+        <h1>Iman Hindawi</h1>
+        <span class="who" id="whoami"></span>
+      </div>
+
+      <nav class="side-nav" id="sideNav">
+        <a href="#panel-messages" class="active">Messages<span class="nav-badge" id="msgBadge" hidden>0</span></a>
+        <a href="#panel-hero">Hero</a>
+        <a href="#panel-intro">Intro</a>
+        <a href="#panel-actress">Project Management</a>
+        <a href="#panel-entrepreneur">Data Analytics</a>
+        <a href="#panel-philanthropist">Web Projects</a>
+        <a href="#panel-quote">Quote</a>
+        <a href="#panel-contact">Contact</a>
+        <a href="#panel-users">Admin Users</a>
+      </nav>
+
+      <div class="side-actions">
+        <button class="btn primary full" id="saveBtn">Save changes</button>
+        <a href="/" target="_blank" class="btn ghost full">View site ↗</a>
+        <button class="btn ghost full" id="logoutBtn">Log out</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="dash-main">
+      <div class="dash-body">
+        <!-- Messages inbox -->
+        <section class="panel" id="panel-messages">
+          <div class="panel-head">
+            <h2>Messages</h2>
+            <button class="btn ghost small" id="refreshMsgs" type="button">Refresh</button>
+          </div>
+          <p class="panel-hint">Messages sent through your website contact form.</p>
+          <div class="msg-list" id="msgList"></div>
+        </section>
+
+        <!-- Hero -->
+        <section class="panel" id="panel-hero">
+          <h2>Hero</h2>
+          <div class="grid-2">
+            <label>Eyebrow<input data-path="hero.eyebrow" /></label>
+            <label>Tagline<input data-path="hero.tagline" /></label>
+            <label>First name<input data-path="hero.firstName" /></label>
+            <label>Last name<input data-path="hero.lastName" /></label>
+          </div>
+        </section>
+
+        <!-- Intro -->
+        <section class="panel" id="panel-intro">
+          <h2>Intro</h2>
+          <label>Intro paragraph<textarea rows="3" data-path="intro.text"></textarea></label>
+        </section>
+
+        <!-- Pillar sections -->
+        <section class="panel" id="panel-actress" data-section="actress">
+          <h2>Section · Project Management</h2>
+          <div class="section-grid">
+            <div class="media-col">
+              <div class="img-preview" data-preview="actress"><span>No image</span></div>
+              <label class="upload-btn">Upload image
+                <input type="file" accept="image/*" data-upload="actress" hidden />
+              </label>
+              <small class="upload-status" data-status="actress"></small>
+            </div>
+            <div class="fields-col">
+              <label>Index label<input data-path="sections.actress.index" /></label>
+              <label>Title<input data-path="sections.actress.title" /></label>
+              <label>Body<textarea rows="4" data-path="sections.actress.body"></textarea></label>
+              <label>List items (one per line)<textarea rows="3" data-list="sections.actress.list"></textarea></label>
+              <label>Call-to-action text<input data-path="sections.actress.cta" /></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-entrepreneur" data-section="entrepreneur">
+          <h2>Section · Data Analytics</h2>
+          <div class="section-grid">
+            <div class="media-col">
+              <div class="img-preview" data-preview="entrepreneur"><span>No image</span></div>
+              <label class="upload-btn">Upload image
+                <input type="file" accept="image/*" data-upload="entrepreneur" hidden />
+              </label>
+              <small class="upload-status" data-status="entrepreneur"></small>
+            </div>
+            <div class="fields-col">
+              <label>Index label<input data-path="sections.entrepreneur.index" /></label>
+              <label>Title<input data-path="sections.entrepreneur.title" /></label>
+              <label>Body<textarea rows="4" data-path="sections.entrepreneur.body"></textarea></label>
+              <label>List items (one per line)<textarea rows="3" data-list="sections.entrepreneur.list"></textarea></label>
+              <label>Call-to-action text<input data-path="sections.entrepreneur.cta" /></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="panel-philanthropist" data-section="philanthropist">
+          <h2>Section · Web Projects</h2>
+          <div class="section-grid">
+            <div class="media-col">
+              <div class="img-preview" data-preview="philanthropist"><span>No image</span></div>
+              <label class="upload-btn">Upload image
+                <input type="file" accept="image/*" data-upload="philanthropist" hidden />
+              </label>
+              <small class="upload-status" data-status="philanthropist"></small>
+            </div>
+            <div class="fields-col">
+              <label>Index label<input data-path="sections.philanthropist.index" /></label>
+              <label>Title<input data-path="sections.philanthropist.title" /></label>
+              <label>Body<textarea rows="4" data-path="sections.philanthropist.body"></textarea></label>
+              <label>List items (one per line)<textarea rows="3" data-list="sections.philanthropist.list"></textarea></label>
+              <label>Call-to-action text<input data-path="sections.philanthropist.cta" /></label>
+            </div>
+          </div>
+        </section>
+
+        <!-- Quote -->
+        <section class="panel" id="panel-quote">
+          <h2>Quote</h2>
+          <label>Quote<textarea rows="2" data-path="quote.text"></textarea></label>
+          <label>Attribution<input data-path="quote.cite" /></label>
+        </section>
+
+        <!-- Contact -->
+        <section class="panel" id="panel-contact">
+          <h2>Contact</h2>
+          <div class="grid-2">
+            <label>Eyebrow<input data-path="contact.eyebrow" /></label>
+            <label>Email<input data-path="contact.email" /></label>
+            <label>Heading<input data-path="contact.heading" /></label>
+            <label>Sub text<input data-path="contact.sub" /></label>
+          </div>
+          <label>Social links (one per line — <em>Label | URL</em>)<textarea rows="4" data-socials="contact.socials"></textarea></label>
+        </section>
+
+        <!-- Admin users -->
+        <section class="panel" id="panel-users">
+          <h2>Admin Users</h2>
+          <p class="panel-hint">People who can sign in and edit this website.</p>
+          <ul class="user-list" id="userList"></ul>
+          <form class="add-user" id="addUserForm">
+            <input type="email" id="newUserEmail" placeholder="new-admin@email.com" required />
+            <input type="password" id="newUserPassword" placeholder="Temp password (min 6 chars)" required />
+            <button type="submit" class="btn primary">Add user</button>
+          </form>
+          <span class="form-error" id="userError"></span>
+
+          <div class="account-block">
+            <h3>Your account</h3>
+            <p class="panel-hint">Change your password using a verification code sent to your email.</p>
+            <button type="button" class="btn ghost" id="resetPwBtn">Reset password</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="save-bar" id="saveBar">
+        <span id="saveMsg"></span>
+        <button class="btn primary" id="saveBtn2">Save changes</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Reset password modal -->
+  <div class="modal-overlay" id="resetModal" hidden>
+    <div class="modal">
+      <button class="modal-close" id="resetClose" aria-label="Close">×</button>
+      <h2>Reset password</h2>
+
+      <div id="resetStep1">
+        <p>We'll email a 6-digit verification code to your address.</p>
+        <label>Email<input type="email" id="resetEmail" placeholder="Email" /></label>
+        <button class="btn primary full" id="sendCodeBtn">Send code</button>
+      </div>
+
+      <div id="resetStep2" hidden>
+        <p id="resetSentMsg"></p>
+        <label>Verification code<input type="text" id="resetCode" inputmode="numeric" placeholder="6-digit code" /></label>
+        <label>New password<input type="password" id="resetNewPw" placeholder="New password (min 6 chars)" /></label>
+        <button class="btn primary full" id="confirmResetBtn">Update password</button>
+        <button type="button" class="link-btn" id="resendBtn">Resend code</button>
+      </div>
+
+      <span class="form-error" id="resetError"></span>
+      <span class="form-ok" id="resetOk"></span>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

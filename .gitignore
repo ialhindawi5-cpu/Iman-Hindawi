@@ -1,0 +1,8 @@
+node_modules/
+.env
+.env.local
+.vercel/
+npm-debug.log*
+# Locally-uploaded images (production uses Vercel Blob). Keep the committed project screenshots.
+public/assets/uploads/*
+!public/assets/uploads/proj-*.png
