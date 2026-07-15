@@ -625,6 +625,49 @@ a { color: inherit; text-decoration: none; }
 }
 .pillar-media.visible .media-fill { transform: scale(1); }
 
+/* ---------- Custom cursor (fine-pointer devices only) ---------- */
+@media (pointer: fine) {
+  body { cursor: none; }
+  a, button, input, textarea, label, .dot, .slide, .menu-toggle { cursor: none; }
+
+  .cursor-dot,
+  .cursor-ring {
+    position: fixed;
+    top: 0; left: 0;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    will-change: transform;
+    opacity: 0;
+    transition: opacity 0.3s var(--ease);
+  }
+  .cursor-ready .cursor-dot,
+  .cursor-ready .cursor-ring { opacity: 1; }
+
+  .cursor-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--accent);
+    transition: opacity 0.3s var(--ease), transform 0.18s var(--ease);
+  }
+  .cursor-ring {
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid rgba(229, 122, 164, 0.7);
+    transition: width 0.3s var(--ease), height 0.3s var(--ease),
+                background 0.3s var(--ease), border-color 0.3s var(--ease), opacity 0.3s var(--ease);
+  }
+  /* Over links / buttons: ring grows & fills, dot hides */
+  .cursor-hover .cursor-ring {
+    width: 58px;
+    height: 58px;
+    background: rgba(229, 122, 164, 0.15);
+    border-color: transparent;
+  }
+  .cursor-hover .cursor-dot { transform: translate(-50%, -50%) scale(0); }
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 760px) {
   .nav {
