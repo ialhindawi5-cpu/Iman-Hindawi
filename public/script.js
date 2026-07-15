@@ -104,17 +104,16 @@ function initUI() {
   // Mobile menu
   const toggle = document.getElementById('menuToggle');
   const nav = document.getElementById('nav');
-  toggle.addEventListener('click', () => {
-    const open = nav.classList.toggle('open');
+  const setMenu = (open) => {
+    nav.classList.toggle('open', open);
     toggle.classList.toggle('open', open);
+    document.body.classList.toggle('menu-open', open);
     toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
-  });
-  nav.querySelectorAll('a').forEach((a) =>
-    a.addEventListener('click', () => {
-      nav.classList.remove('open');
-      toggle.classList.remove('open');
-    })
-  );
+  };
+  toggle.addEventListener('click', () => setMenu(!nav.classList.contains('open')));
+  nav.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setMenu(false)));
+  // Close on Escape
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
 
   // Parallax (skipped for reduced-motion users)
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
