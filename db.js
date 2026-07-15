@@ -52,6 +52,11 @@ async function doInit() {
     expires bigint NOT NULL,
     attempts int NOT NULL DEFAULT 0
   )`;
+  // token_version invalidates old JWTs when a password changes.
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version int NOT NULL DEFAULT 0`;
+  // Rate-limit events (brute-force protection), shared across serverless instances.
+  await sql`CREATE TABLE IF NOT EXISTS rate_events (k text NOT NULL, ts bigint NOT NULL)`;
+  await sql`CREATE INDEX IF NOT EXISTS rate_events_k_ts ON rate_events (k, ts)`;
 
   // Seed content row once.
   const c = await sql`SELECT 1 FROM content WHERE id = 1`;

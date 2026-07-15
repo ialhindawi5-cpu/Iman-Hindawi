@@ -17,13 +17,64 @@ const AUTH_SECRET = new TextEncoder().encode(
   process.env.AUTH_SECRET || 'dev-insecure-secret-change-me'
 );
 
-app.use(express.json({ limit: '2mb' }));
+app.disable('x-powered-by');
+app.set('trust proxy', true);
+app.use(express.json({ limit: '1mb' }));
+
+// ---------- Security headers (applied to API + local static) ----------
+const CSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "script-src 'self'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: https://*.public.blob.vercel-storage.com",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+].join('; ');
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), browsing-topics=()');
+  res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  res.setHeader('Content-Security-Policy', CSP);
+  next();
+});
 
 // Ensure the database schema/seed exists before handling any request (cached after first).
 app.use(async (req, res, next) => {
   try { await init(); next(); }
   catch (err) { console.error('DB init failed:', err.message); res.status(500).json({ error: 'Database unavailable' }); }
 });
+
+// ---------- Rate limiting (DB-backed → works across serverless instances) ----------
+function clientIp(req) {
+  const xff = req.headers['x-forwarded-for'];
+  if (xff) return String(xff).split(',')[0].trim();
+  return req.ip || (req.socket && req.socket.remoteAddress) || 'unknown';
+}
+function rateLimit(name, max, windowMs) {
+  return async (req, res, next) => {
+    try {
+      const key = `${name}:${clientIp(req)}`;
+      const now = Date.now();
+      const rows = await sql`SELECT count(*)::int AS n FROM rate_events WHERE k = ${key} AND ts > ${now - windowMs}`;
+      if (rows[0].n >= max) {
+        res.setHeader('Retry-After', String(Math.ceil(windowMs / 1000)));
+        return res.status(429).json({ error: 'Too many attempts. Please try again later.' });
+      }
+      await sql`INSERT INTO rate_events (k, ts) VALUES (${key}, ${now})`;
+      if (Math.random() < 0.05) await sql`DELETE FROM rate_events WHERE ts < ${now - 24 * 60 * 60 * 1000}`;
+      next();
+    } catch (err) {
+      console.error('rate-limit error:', err.message); // fail open — never lock out on a DB hiccup
+      next();
+    }
+  };
+}
 
 /* ============================================================
  *  Password hashing + JWT auth (stateless — works on serverless)
@@ -39,19 +90,25 @@ function verifyPassword(password, salt, hash) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 async function signToken(user) {
-  return new SignJWT({ email: user.email })
+  return new SignJWT({ email: user.email, tv: user.token_version })
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(user.id)
     .setIssuedAt()
-    .setExpirationTime('7d')
+    .setExpirationTime('2d')
     .sign(AUTH_SECRET);
 }
 async function requireAuth(req, res, next) {
   const token = req.get('x-admin-token');
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    const { payload } = await jwtVerify(token, AUTH_SECRET);
-    req.user = { userId: payload.sub, email: payload.email };
+    const { payload } = await jwtVerify(token, AUTH_SECRET, { algorithms: ['HS256'] });
+    // Confirm the user still exists and the token hasn't been invalidated by a password change.
+    const rows = await sql`SELECT id, email, role, token_version FROM users WHERE id = ${payload.sub}`;
+    const user = rows[0];
+    if (!user || Number(payload.tv) !== user.token_version) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    req.user = { userId: user.id, email: user.email, role: user.role };
     next();
   } catch {
     res.status(401).json({ error: 'Unauthorized' });
@@ -158,7 +215,7 @@ async function storeImage(section, file) {
 /* ============================================================
  *  Auth routes
  * ============================================================ */
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', rateLimit('login', 8, 10 * 60 * 1000), async (req, res) => {
   const { email, password } = req.body || {};
   const user = await findUserByEmail(email);
   if (!user || !verifyPassword(password || '', user.salt, user.hash)) {
@@ -177,7 +234,7 @@ app.get('/api/account', requireAuth, async (req, res) => {
 });
 
 /* ---------- Password reset via email code ---------- */
-app.post('/api/request-reset', async (req, res) => {
+app.post('/api/request-reset', rateLimit('reset', 5, 15 * 60 * 1000), async (req, res) => {
   const user = await findUserByEmail(req.body?.email);
   if (user) {
     const code = String(crypto.randomInt(100000, 1000000));
@@ -214,11 +271,12 @@ app.post('/api/reset-password', async (req, res) => {
     await sql`UPDATE reset_codes SET attempts = attempts + 1 WHERE email = ${user.email}`;
     return res.status(400).json({ error: 'Invalid code' });
   }
-  if (!newPassword || newPassword.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (!newPassword || newPassword.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
   }
   const { salt, hash } = hashPassword(newPassword);
-  await sql`UPDATE users SET salt = ${salt}, hash = ${hash} WHERE id = ${user.id}`;
+  // Bump token_version so any existing sessions with the old password are invalidated.
+  await sql`UPDATE users SET salt = ${salt}, hash = ${hash}, token_version = token_version + 1 WHERE id = ${user.id}`;
   await sql`DELETE FROM reset_codes WHERE email = ${user.email}`;
   res.json({ ok: true });
 });
@@ -235,8 +293,8 @@ app.post('/api/users', requireAuth, async (req, res) => {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(clean)) {
     return res.status(400).json({ error: 'Enter a valid email address' });
   }
-  if (!password || password.length < 6) {
-    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+  if (!password || password.length < 8) {
+    return res.status(400).json({ error: 'Password must be at least 8 characters' });
   }
   const existing = await findUserByEmail(clean);
   if (existing) return res.status(409).json({ error: 'A user with that email already exists' });
@@ -279,8 +337,20 @@ app.put('/api/content', requireAuth, async (req, res) => {
   }
 });
 
+// Verify the bytes are really an image (defends against disguised uploads).
+function looksLikeImage(b) {
+  if (!b || b.length < 12) return false;
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return true; // JPEG
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return true; // PNG
+  if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) return true; // GIF
+  if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return true; // WEBP
+  return false;
+}
+const ALLOWED_SECTIONS = new Set(['actress', 'entrepreneur', 'philanthropist']);
 app.post('/api/upload/:section', requireAuth, upload.single('image'), async (req, res) => {
+  if (!ALLOWED_SECTIONS.has(req.params.section)) return res.status(400).json({ error: 'Invalid section' });
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  if (!looksLikeImage(req.file.buffer)) return res.status(400).json({ error: 'File is not a valid image' });
   try {
     const url = await storeImage(req.params.section, req.file);
     const content = await getContent();
@@ -297,7 +367,7 @@ app.post('/api/upload/:section', requireAuth, upload.single('image'), async (req
 /* ============================================================
  *  Contact messages
  * ============================================================ */
-app.post('/api/contact', async (req, res) => {
+app.post('/api/contact', rateLimit('contact', 5, 15 * 60 * 1000), async (req, res) => {
   const name = String(req.body?.name || '').trim();
   const email = String(req.body?.email || '').trim();
   const phone = String(req.body?.phone || '').trim();
@@ -364,6 +434,18 @@ app.delete('/api/messages/:id', requireAuth, async (req, res) => {
  * ============================================================ */
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 app.use('/', express.static(path.join(__dirname, 'public')));
+
+// ---------- Error handler (never leak stack traces) ----------
+app.use((err, req, res, next) => {
+  if (err) {
+    if (err.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ error: 'Image is too large (max 8MB)' });
+    if (/only image files/i.test(err.message || '')) return res.status(400).json({ error: 'Only image files are allowed' });
+    if (err.type === 'entity.too.large') return res.status(413).json({ error: 'Request too large' });
+    console.error('Unhandled error:', err.message);
+  }
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: 'Server error' });
+});
 
 // Only listen when run directly (local dev). On Vercel the app is exported.
 if (require.main === module) {
