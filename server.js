@@ -196,9 +196,23 @@ const upload = multer({
   fileFilter: (_req, file, cb) =>
     /^image\//.test(file.mimetype) ? cb(null, true) : cb(new Error('Only image files are allowed')),
 });
+// Blob stores connected through Vercel's dashboard authenticate over OIDC and
+// issue no read-write token; the store id arrives under the connection's env
+// prefix, which is not the BLOB_STORE_ID the SDK reads by default.
+const BLOB_STORE_ID = process.env.BLOB_STORE_ID || process.env.ImanBlob_STORE_ID;
+
 async function storeImage(section, file) {
   const ext = (path.extname(file.originalname) || '.jpg').toLowerCase();
   const filename = `${section.replace(/[^a-z0-9_-]/gi, '')}-${Date.now()}${ext}`;
+  if (process.env.VERCEL_OIDC_TOKEN && BLOB_STORE_ID) {
+    const { put } = require('@vercel/blob');
+    const blob = await put(`uploads/${filename}`, file.buffer, {
+      access: 'public',
+      contentType: file.mimetype,
+      storeId: BLOB_STORE_ID,
+    });
+    return blob.url; // absolute https URL
+  }
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     const { put } = require('@vercel/blob');
     const blob = await put(`uploads/${filename}`, file.buffer, {
@@ -210,7 +224,7 @@ async function storeImage(section, file) {
   // The disk fallback only works locally — Vercel's filesystem is read-only.
   if (process.env.VERCEL) {
     throw new Error(
-      'Image storage is not configured. In Vercel: Storage → Create Database → Blob, connect it to this project, then redeploy.'
+      'Image storage is not configured. In Vercel: Storage → Blob → Connect to Project, then redeploy.'
     );
   }
   if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -238,6 +252,8 @@ app.get('/api/_diag', requireAuth, (_req, res) => {
   res.json({
     onVercel: !!process.env.VERCEL,
     blobToken: !!process.env.BLOB_READ_WRITE_TOKEN,
+    blobOidcToken: !!process.env.VERCEL_OIDC_TOKEN,
+    blobStoreId: !!BLOB_STORE_ID,
     databaseUrl: !!process.env.DATABASE_URL,
     authSecret: !!process.env.AUTH_SECRET,
     gmailUser: !!process.env.GMAIL_USER,
