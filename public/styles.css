@@ -79,6 +79,8 @@ a { color: inherit; text-decoration: none; }
   gap: 5px;
   background: none;
   border: none;
+  /* UA styles force buttons to `buttontext` (black); the bars use currentColor */
+  color: inherit;
   cursor: pointer;
   padding: 4px;
 }

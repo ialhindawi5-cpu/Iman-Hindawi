@@ -468,3 +468,38 @@ input:focus, textarea:focus {
   .add-user .btn { justify-content: center; }
   .user-list li { grid-template-columns: 1fr auto; }
 }
+
+/* ----- Password fields with a reveal toggle (wrapper injected by admin.js) ----- */
+/* Kept last so it outranks `.login-card input` / `input:not([type="file"])`. */
+.pw-field { position: relative; display: block; }
+.pw-field input { width: 100%; margin: 0; padding-right: 2.75rem; }
+.pw-field .pw-toggle {
+  position: absolute;
+  top: 0; right: 0;
+  width: 2.75rem; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.pw-field .pw-toggle:hover { color: var(--ink); }
+.pw-field .pw-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.pw-icon { width: 18px; height: 18px; display: block; }
+.pw-toggle .pw-icon-hide { display: none; }
+.pw-toggle[aria-pressed="true"] .pw-icon-show { display: none; }
+.pw-toggle[aria-pressed="true"] .pw-icon-hide { display: block; }
+
+/* Spacing the wrapper inherits from the input it replaced in each context */
+.login-card .pw-field { margin-bottom: 1rem; }
+.modal .pw-field { margin-top: 0.4rem; }
+.add-user .pw-field { flex: 1; min-width: 160px; }
+
+/* Edge/IE render their own reveal control — avoid doubling up */
+.pw-field input::-ms-reveal,
+.pw-field input::-ms-clear { display: none; }
