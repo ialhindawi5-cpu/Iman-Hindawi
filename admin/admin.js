@@ -197,23 +197,32 @@ hamburger.addEventListener('click', () =>
 );
 sidebarOverlay.addEventListener('click', closeDrawer);
 
-// Close the drawer when a nav link is tapped
+/* ---------- panel routing — one section on screen at a time ---------- */
+// Hidden panels stay in the DOM, so collect() still gathers every field and
+// Save changes keeps saving the whole site, not just the visible section.
 const navLinks = Array.from(document.querySelectorAll('.side-nav a'));
-navLinks.forEach((a) => a.addEventListener('click', closeDrawer));
+const panels = Array.from(document.querySelectorAll('.dash-body .panel'));
+const DEFAULT_PANEL = 'panel-messages';
 
-// Highlight the nav link for the section currently in view
-const navObserver = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((e) => {
-      if (e.isIntersecting) {
-        const id = e.target.id;
-        navLinks.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === `#${id}`));
-      }
-    });
-  },
-  { rootMargin: '-45% 0px -50% 0px', threshold: 0 }
+function showPanel(id) {
+  const target = panels.some((p) => p.id === id) ? id : DEFAULT_PANEL;
+  panels.forEach((p) => { p.hidden = p.id !== target; });
+  navLinks.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === `#${target}`));
+  if (location.hash !== `#${target}`) history.replaceState(null, '', `#${target}`);
+  window.scrollTo(0, 0);
+}
+
+navLinks.forEach((a) =>
+  a.addEventListener('click', (e) => {
+    e.preventDefault(); // routing replaces anchor scrolling
+    showPanel(a.getAttribute('href').slice(1));
+    closeDrawer();
+  })
 );
-document.querySelectorAll('.panel').forEach((p) => navObserver.observe(p));
+
+// Keeps the back button and a pasted #panel-… URL working.
+window.addEventListener('hashchange', () => showPanel(location.hash.slice(1)));
+showPanel(location.hash.slice(1));
 
 /* ---------- admin users ---------- */
 async function loadUsers() {
