@@ -201,15 +201,24 @@ const upload = multer({
 // prefix, which is not the BLOB_STORE_ID the SDK reads by default.
 const BLOB_STORE_ID = process.env.BLOB_STORE_ID || process.env.ImanBlob_STORE_ID;
 
-async function storeImage(section, file) {
+// Inside a function the OIDC token is per-request header only — the env var is
+// populated during builds and `vercel env pull`, never at runtime. Both must be
+// passed to put() explicitly, since the SDK only auto-reads the env var.
+function getOidcToken(req) {
+  return process.env.VERCEL_OIDC_TOKEN || (req && req.headers['x-vercel-oidc-token']) || null;
+}
+
+async function storeImage(section, file, req) {
   const ext = (path.extname(file.originalname) || '.jpg').toLowerCase();
   const filename = `${section.replace(/[^a-z0-9_-]/gi, '')}-${Date.now()}${ext}`;
-  if (process.env.VERCEL_OIDC_TOKEN && BLOB_STORE_ID) {
+  const oidcToken = getOidcToken(req);
+  if (oidcToken && BLOB_STORE_ID) {
     const { put } = require('@vercel/blob');
     const blob = await put(`uploads/${filename}`, file.buffer, {
       access: 'public',
       contentType: file.mimetype,
       storeId: BLOB_STORE_ID,
+      oidcToken,
     });
     return blob.url; // absolute https URL
   }
@@ -248,11 +257,13 @@ app.post('/api/login', rateLimit('login', 8, 10 * 60 * 1000), async (req, res) =
 app.post('/api/logout', requireAuth, (_req, res) => res.json({ ok: true }));
 
 // Admin-only config check. Reports presence of env vars as booleans — never their values.
-app.get('/api/_diag', requireAuth, (_req, res) => {
+app.get('/api/_diag', requireAuth, (req, res) => {
   res.json({
     onVercel: !!process.env.VERCEL,
     blobToken: !!process.env.BLOB_READ_WRITE_TOKEN,
-    blobOidcToken: !!process.env.VERCEL_OIDC_TOKEN,
+    blobOidcEnv: !!process.env.VERCEL_OIDC_TOKEN,
+    blobOidcHeader: !!req.headers['x-vercel-oidc-token'],
+    blobOidcResolved: !!getOidcToken(req),
     blobStoreId: !!BLOB_STORE_ID,
     databaseUrl: !!process.env.DATABASE_URL,
     authSecret: !!process.env.AUTH_SECRET,
@@ -387,7 +398,7 @@ app.post('/api/upload/:section', requireAuth, upload.single('image'), async (req
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
   if (!looksLikeImage(req.file.buffer)) return res.status(400).json({ error: 'File is not a valid image' });
   try {
-    const url = await storeImage(req.params.section, req.file);
+    const url = await storeImage(req.params.section, req.file, req);
     const content = await getContent();
     if (content && content.sections && content.sections[req.params.section]) {
       content.sections[req.params.section].image = url;
