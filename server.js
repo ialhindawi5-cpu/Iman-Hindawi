@@ -207,6 +207,12 @@ async function storeImage(section, file) {
     });
     return blob.url; // absolute https URL
   }
+  // The disk fallback only works locally — Vercel's filesystem is read-only.
+  if (process.env.VERCEL) {
+    throw new Error(
+      'Image storage is not configured. In Vercel: Storage → Create Database → Blob, connect it to this project, then redeploy.'
+    );
+  }
   if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
   fs.writeFileSync(path.join(UPLOAD_DIR, filename), file.buffer);
   return `assets/uploads/${filename}`; // relative path (served statically)
