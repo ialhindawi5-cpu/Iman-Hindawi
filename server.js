@@ -233,6 +233,19 @@ app.post('/api/login', rateLimit('login', 8, 10 * 60 * 1000), async (req, res) =
 
 app.post('/api/logout', requireAuth, (_req, res) => res.json({ ok: true }));
 
+// Admin-only config check. Reports presence of env vars as booleans — never their values.
+app.get('/api/_diag', requireAuth, (_req, res) => {
+  res.json({
+    onVercel: !!process.env.VERCEL,
+    blobToken: !!process.env.BLOB_READ_WRITE_TOKEN,
+    databaseUrl: !!process.env.DATABASE_URL,
+    authSecret: !!process.env.AUTH_SECRET,
+    gmailUser: !!process.env.GMAIL_USER,
+    gmailAppPassword: !!process.env.GMAIL_APP_PASSWORD,
+    notifyEmail: !!process.env.NOTIFY_EMAIL,
+  });
+});
+
 app.get('/api/account', requireAuth, async (req, res) => {
   const rows = await sql`SELECT email, role FROM users WHERE id = ${req.user.userId}`;
   if (!rows[0]) return res.status(401).json({ error: 'Unauthorized' });
