@@ -469,6 +469,10 @@ input:focus, textarea:focus {
   .user-list li { grid-template-columns: 1fr auto; }
 }
 
+/* .btn is inline-flex, so centre the label the way .upload-btn above it sits */
+.remove-btn { justify-content: center; }
+.remove-btn:hover { border-color: var(--err); color: var(--err); }
+
 /* ----- Password fields with a reveal toggle (wrapper injected by admin.js) ----- */
 /* Kept last so it outranks `.login-card input` / `input:not([type="file"])`. */
 .pw-field { position: relative; display: block; }

@@ -85,6 +85,9 @@ function applyPreview(el, img) {
     el.style.backgroundImage = '';
     el.innerHTML = '<span>No image</span>';
   }
+  // Removal is only offered when there is something to remove.
+  const removeBtn = document.querySelector(`[data-remove="${el.dataset.preview}"]`);
+  if (removeBtn) removeBtn.hidden = !img;
 }
 function collect() {
   document.querySelectorAll('[data-path]').forEach((el) => setPath(content, el.dataset.path, el.value));
@@ -100,6 +103,30 @@ function collect() {
   });
   return content;
 }
+
+/* ---------- image removal ---------- */
+document.querySelectorAll('[data-remove]').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    const section = btn.dataset.remove;
+    if (!confirm('Remove this image? The website will show no image for this section until you upload another.')) return;
+    const statusEl = document.querySelector(`[data-status="${section}"]`);
+    statusEl.className = 'upload-status';
+    statusEl.textContent = 'Removing…';
+    btn.disabled = true;
+    try {
+      await api(`/api/upload/${section}`, { method: 'DELETE', headers: authHeaders() });
+      if (content && content.sections && content.sections[section]) content.sections[section].image = '';
+      applyPreview(document.querySelector(`[data-preview="${section}"]`), '');
+      statusEl.textContent = 'Removed ✓';
+      statusEl.classList.add('ok');
+    } catch (err) {
+      statusEl.textContent = err.message;
+      statusEl.classList.add('err');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+});
 
 /* ---------- image upload ---------- */
 document.querySelectorAll('[data-upload]').forEach((input) => {

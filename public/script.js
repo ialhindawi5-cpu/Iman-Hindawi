@@ -1,5 +1,4 @@
 // ---------- Hydrate content from the data store ----------
-const MEDIA_OVERLAY = 'linear-gradient(160deg, rgba(122,28,71,0.28), rgba(122,28,71,0.42))';
 
 function setText(id, value) {
   const el = document.getElementById(id);
@@ -21,7 +20,9 @@ function setMedia(id, image) {
   const el = document.getElementById(id);
   if (!el) return;
   if (image) {
-    el.style.backgroundImage = `${MEDIA_OVERLAY}, url("${image}")`;
+    // Uploaded photos show as-is; the tinted gradient in the CSS class remains
+    // the placeholder for sections with no image.
+    el.style.backgroundImage = `url("${image}")`;
   }
 }
 

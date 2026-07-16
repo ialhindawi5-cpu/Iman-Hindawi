@@ -410,6 +410,44 @@ app.post('/api/upload/:section', requireAuth, upload.single('image'), async (req
   }
 });
 
+// Best-effort: an orphaned blob is not worth failing the removal over, since the
+// section is only considered cleared once the content reference is gone.
+async function deleteStoredImage(image, req) {
+  try {
+    if (/^https?:\/\//.test(image)) {
+      const { del } = require('@vercel/blob');
+      const oidcToken = getOidcToken(req);
+      if (oidcToken && BLOB_STORE_ID) await del(image, { storeId: BLOB_STORE_ID, oidcToken });
+      else if (process.env.BLOB_READ_WRITE_TOKEN) await del(image);
+      return;
+    }
+    if (process.env.VERCEL) return; // read-only filesystem
+    const full = path.join(__dirname, 'public', image);
+    if (full.startsWith(UPLOAD_DIR) && fs.existsSync(full)) fs.unlinkSync(full);
+  } catch (err) {
+    console.error('Could not delete stored image:', err.message);
+  }
+}
+
+app.delete('/api/upload/:section', requireAuth, async (req, res) => {
+  const section = req.params.section;
+  if (!ALLOWED_SECTIONS.has(section)) return res.status(400).json({ error: 'Invalid section' });
+  try {
+    const content = await getContent();
+    const current = content && content.sections && content.sections[section]
+      ? content.sections[section].image
+      : '';
+    if (current) await deleteStoredImage(current, req);
+    if (content && content.sections && content.sections[section]) {
+      content.sections[section].image = '';
+      await saveContent(content);
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Remove failed: ' + err.message });
+  }
+});
+
 /* ============================================================
  *  Contact messages
  * ============================================================ */
