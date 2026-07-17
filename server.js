@@ -208,26 +208,25 @@ function getOidcToken(req) {
   return process.env.VERCEL_OIDC_TOKEN || (req && req.headers['x-vercel-oidc-token']) || null;
 }
 
-async function storeImage(section, file, req) {
-  const ext = (path.extname(file.originalname) || '.jpg').toLowerCase();
-  const filename = `${section.replace(/[^a-z0-9_-]/gi, '')}-${Date.now()}${ext}`;
+// Persist an image buffer to Blob (prod) or local disk (dev) and return its URL.
+async function storeImageBuffer(baseName, buffer, contentType, req) {
+  const ext =
+    contentType === 'image/png' ? '.png'
+      : contentType === 'image/webp' ? '.webp'
+        : /jpe?g/.test(contentType || '') ? '.jpg'
+          : '.jpg';
+  const filename = `${String(baseName).replace(/[^a-z0-9_-]/gi, '')}-${Date.now()}${ext}`;
   const oidcToken = getOidcToken(req);
   if (oidcToken && BLOB_STORE_ID) {
     const { put } = require('@vercel/blob');
-    const blob = await put(`uploads/${filename}`, file.buffer, {
-      access: 'public',
-      contentType: file.mimetype,
-      storeId: BLOB_STORE_ID,
-      oidcToken,
+    const blob = await put(`uploads/${filename}`, buffer, {
+      access: 'public', contentType, storeId: BLOB_STORE_ID, oidcToken,
     });
     return blob.url; // absolute https URL
   }
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     const { put } = require('@vercel/blob');
-    const blob = await put(`uploads/${filename}`, file.buffer, {
-      access: 'public',
-      contentType: file.mimetype,
-    });
+    const blob = await put(`uploads/${filename}`, buffer, { access: 'public', contentType });
     return blob.url; // absolute https URL
   }
   // The disk fallback only works locally — Vercel's filesystem is read-only.
@@ -237,8 +236,53 @@ async function storeImage(section, file, req) {
     );
   }
   if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-  fs.writeFileSync(path.join(UPLOAD_DIR, filename), file.buffer);
+  fs.writeFileSync(path.join(UPLOAD_DIR, filename), buffer);
   return `assets/uploads/${filename}`; // relative path (served statically)
+}
+
+async function storeImage(section, file, req) {
+  const ext = (path.extname(file.originalname) || '').toLowerCase();
+  // Preserve the uploaded extension when we recognise it; otherwise fall back
+  // to the content-type mapping inside storeImageBuffer.
+  const type = /png$/.test(ext) ? 'image/png'
+    : /webp$/.test(ext) ? 'image/webp'
+      : file.mimetype;
+  return storeImageBuffer(section, file.buffer, type, req);
+}
+
+// Capture a screenshot of a live URL via Microlink's free API, then re-host it
+// in our own Blob store so the slideshow never hot-links a third party (and it
+// stays within our image CSP). Also returns the page <title> for the slide label.
+async function captureProjectShot(targetUrl, req) {
+  const endpoint =
+    'https://api.microlink.io/?' +
+    new URLSearchParams({
+      url: targetUrl,
+      screenshot: 'true',
+      meta: 'true',
+      type: 'png',
+      'viewport.width': '1280',
+      'viewport.height': '800',
+      'viewport.deviceScaleFactor': '2',
+    }).toString();
+
+  const headers = {};
+  if (process.env.MICROLINK_API_KEY) headers['x-api-key'] = process.env.MICROLINK_API_KEY;
+
+  const metaRes = await fetch(endpoint, { headers });
+  const meta = await metaRes.json().catch(() => null);
+  const shotUrl = meta && meta.data && meta.data.screenshot && meta.data.screenshot.url;
+  if (!metaRes.ok || meta.status !== 'success' || !shotUrl) {
+    const reason = (meta && (meta.message || meta.status)) || `HTTP ${metaRes.status}`;
+    throw new Error(`Screenshot service could not capture that URL (${reason}).`);
+  }
+
+  const imgRes = await fetch(shotUrl);
+  if (!imgRes.ok) throw new Error('Could not download the captured screenshot.');
+  const buffer = Buffer.from(await imgRes.arrayBuffer());
+  const image = await storeImageBuffer('project', buffer, 'image/png', req);
+  const title = String((meta.data.title || '')).trim();
+  return { image, title };
 }
 
 /* ============================================================
@@ -380,6 +424,27 @@ app.put('/api/content', requireAuth, async (req, res) => {
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: 'Could not save content' });
+  }
+});
+
+// Capture (or refresh) a screenshot for a Web-Projects slide from just its URL.
+app.post('/api/projects/screenshot', requireAuth, async (req, res) => {
+  let target = String(req.body?.url || '').trim();
+  if (!target) return res.status(400).json({ error: 'A project URL is required.' });
+  if (!/^https?:\/\//i.test(target)) target = `https://${target}`;
+  try {
+    // Validate the URL and only allow public http(s) links.
+    const u = new URL(target);
+    if (!/^https?:$/.test(u.protocol)) throw new Error('bad protocol');
+    target = u.toString();
+  } catch {
+    return res.status(400).json({ error: 'That does not look like a valid website URL.' });
+  }
+  try {
+    const { image, title } = await captureProjectShot(target, req);
+    res.json({ ok: true, url: target, image, title });
+  } catch (err) {
+    res.status(502).json({ error: err.message || 'Could not capture a screenshot.' });
   }
 });
 

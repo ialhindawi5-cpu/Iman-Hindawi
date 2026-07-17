@@ -159,6 +159,52 @@ function hydrate(c) {
       socials.appendChild(a);
     });
   }
+
+  // Web Projects slideshow — rebuilt from content when projects are defined.
+  renderProjects(c.projects);
+}
+
+// Replace the slideshow's hardcoded slides with the admin-managed project list.
+// Runs before initUI (loadContent().finally(initUI)), so the slideshow wiring
+// picks up these fresh .slide / .dot nodes. If there are no valid projects the
+// static fallback markup in index.html is left untouched.
+function renderProjects(projects) {
+  const slideshow = document.getElementById('webSlideshow');
+  if (!slideshow || !Array.isArray(projects)) return;
+  const valid = projects.filter((p) => p && p.url && p.image);
+  if (!valid.length) return;
+
+  slideshow.innerHTML = '';
+  const dots = document.createElement('div');
+  dots.className = 'slide-dots';
+  dots.id = 'slideDots';
+
+  valid.forEach((p, i) => {
+    const slide = document.createElement('a');
+    slide.className = 'slide' + (i === 0 ? ' active' : '');
+    slide.href = p.url;
+    slide.target = '_blank';
+    slide.rel = 'noopener';
+    slide.style.backgroundImage = `url("${p.image}")`;
+
+    const label = document.createElement('span');
+    label.className = 'slide-label';
+    label.textContent = `${p.title || 'Project'} `;
+    const visit = document.createElement('span');
+    visit.textContent = 'Visit ↗';
+    label.appendChild(visit);
+    slide.appendChild(label);
+    slideshow.appendChild(slide);
+
+    const dot = document.createElement('button');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.type = 'button';
+    dot.dataset.i = String(i);
+    dot.setAttribute('aria-label', p.title || `Project ${i + 1}`);
+    dots.appendChild(dot);
+  });
+
+  slideshow.appendChild(dots);
 }
 
 async function loadContent() {

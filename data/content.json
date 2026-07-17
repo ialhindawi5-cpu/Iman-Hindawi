@@ -34,6 +34,11 @@
       "image": ""
     }
   },
+  "projects": [
+    { "url": "https://exam-management-system-kappa.vercel.app/", "title": "Exam System", "image": "assets/uploads/proj-exam.png?v=2" },
+    { "url": "https://hibas-bakery.vercel.app/", "title": "Hiba's Bakery", "image": "assets/uploads/proj-bakery.png?v=2" },
+    { "url": "https://makeup-by-ikbal.vercel.app/", "title": "Makeup by Ikbal", "image": "assets/uploads/proj-makeup.png?v=2" }
+  ],
   "quote": {
     "text": "Plan with precision, deliver with clarity, and let the data lead.",
     "cite": "— Iman Al Hindawi"

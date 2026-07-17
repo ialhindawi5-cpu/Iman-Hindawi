@@ -74,6 +74,7 @@ function populate() {
   document.querySelectorAll('[data-preview]').forEach((el) => {
     applyPreview(el, content.sections[el.dataset.preview]?.image);
   });
+  renderProjectsEditor();
 }
 function applyPreview(el, img) {
   if (img) {
@@ -152,6 +153,140 @@ document.querySelectorAll('[data-upload]').forEach((input) => {
       input.value = '';
     }
   });
+});
+
+/* ---------- web projects (slideshow) ---------- */
+function projImgSrc(img) {
+  if (!img) return '';
+  return /^https?:\/\//.test(img) ? img : `/${img.replace(/^\//, '')}`;
+}
+function mkProjBtn(text, title, onClick) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'btn ghost small';
+  b.textContent = text;
+  if (title) b.title = title;
+  b.addEventListener('click', onClick);
+  return b;
+}
+function renderProjectsEditor() {
+  const list = $('projectsList');
+  if (!list) return;
+  if (!Array.isArray(content.projects)) content.projects = [];
+  list.innerHTML = '';
+  if (!content.projects.length) {
+    list.innerHTML = '<p class="projects-empty">No projects yet — add one below.</p>';
+    return;
+  }
+  content.projects.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'project-row';
+
+    const thumb = document.createElement('div');
+    thumb.className = 'project-thumb';
+    const src = projImgSrc(p.image);
+    if (src) thumb.style.backgroundImage = `url("${src}")`;
+    else thumb.textContent = 'No image';
+    row.appendChild(thumb);
+
+    const main = document.createElement('div');
+    main.className = 'project-main';
+    const titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.className = 'project-title';
+    titleInput.value = p.title || '';
+    titleInput.placeholder = 'Project title';
+    titleInput.addEventListener('input', () => { content.projects[i].title = titleInput.value; });
+    const link = document.createElement('a');
+    link.className = 'project-url';
+    link.href = p.url;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = p.url;
+    main.append(titleInput, link);
+    row.appendChild(main);
+
+    const actions = document.createElement('div');
+    actions.className = 'project-actions';
+    const up = mkProjBtn('↑', 'Move up', () => moveProject(i, -1));
+    const down = mkProjBtn('↓', 'Move down', () => moveProject(i, 1));
+    up.disabled = i === 0;
+    down.disabled = i === content.projects.length - 1;
+    const refresh = mkProjBtn('Refresh shot', 'Re-capture the screenshot', (e) => refreshProject(i, e.currentTarget));
+    const remove = mkProjBtn('Remove', '', () => removeProject(i));
+    remove.classList.remove('ghost');
+    remove.classList.add('danger');
+    actions.append(up, down, refresh, remove);
+    row.appendChild(actions);
+
+    list.appendChild(row);
+  });
+}
+function moveProject(i, dir) {
+  const j = i + dir;
+  if (j < 0 || j >= content.projects.length) return;
+  const [item] = content.projects.splice(i, 1);
+  content.projects.splice(j, 0, item);
+  renderProjectsEditor();
+}
+function removeProject(i) {
+  if (!confirm('Remove this project from the slideshow?')) return;
+  content.projects.splice(i, 1);
+  renderProjectsEditor();
+}
+async function captureShot(url) {
+  return api('/api/projects/screenshot', {
+    method: 'POST',
+    headers: authHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ url }),
+  });
+}
+function projStatus(msg, kind) {
+  const el = $('projectStatus');
+  if (!el) return;
+  el.className = 'project-status' + (kind ? ` ${kind}` : '');
+  el.textContent = msg;
+}
+async function refreshProject(i, btn) {
+  projStatus('Capturing screenshot…');
+  if (btn) btn.disabled = true;
+  try {
+    const data = await captureShot(content.projects[i].url);
+    content.projects[i].image = data.image;
+    if (!content.projects[i].title && data.title) content.projects[i].title = data.title;
+    renderProjectsEditor();
+    projStatus('Screenshot updated ✓ — click Save changes to publish.', 'ok');
+  } catch (err) {
+    projStatus(err.message, 'err');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+async function addProject() {
+  const input = $('newProjectUrl');
+  const btn = $('addProjectBtn');
+  const url = input.value.trim();
+  if (!url) { projStatus('Paste a project link first.', 'err'); return; }
+  projStatus('Capturing screenshot… this can take a few seconds.');
+  btn.disabled = true;
+  try {
+    const data = await captureShot(url);
+    if (!Array.isArray(content.projects)) content.projects = [];
+    content.projects.push({ url: data.url, title: data.title || '', image: data.image });
+    input.value = '';
+    renderProjectsEditor();
+    projStatus('Project added ✓ — click Save changes to publish it live.', 'ok');
+  } catch (err) {
+    projStatus(err.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+const addProjectBtn = $('addProjectBtn');
+if (addProjectBtn) addProjectBtn.addEventListener('click', addProject);
+const newProjectUrl = $('newProjectUrl');
+if (newProjectUrl) newProjectUrl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); addProject(); }
 });
 
 /* ---------- save content ---------- */
