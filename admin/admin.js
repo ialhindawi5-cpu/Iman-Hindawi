@@ -34,24 +34,88 @@ async function api(url, options = {}) {
 const loginScreen = $('loginScreen');
 const dash = $('dash');
 
+// Held in memory only (never stored) so "Resend code" can re-trigger step 1.
+let pendingLogin = null;
+
 $('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   $('loginError').textContent = '';
+  const email = $('loginEmail').value.trim();
+  const password = $('loginPassword').value;
   try {
     const data = await api('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: $('loginEmail').value.trim(),
-        password: $('loginPassword').value,
-      }),
+      body: JSON.stringify({ email, password }),
     });
-    localStorage.setItem(TOKEN_KEY, data.token);
-    enterDashboard();
+    if (data.mfaRequired) {
+      pendingLogin = { email, password };
+      showMfaStep(data);
+    } else if (data.token) {
+      // Fallback for any non-2FA response.
+      localStorage.setItem(TOKEN_KEY, data.token);
+      enterDashboard();
+    }
   } catch (err) {
     $('loginError').textContent = err.message;
   }
 });
+
+function showMfaStep(data) {
+  $('loginForm').hidden = true;
+  $('mfaForm').hidden = false;
+  $('mfaError').textContent = '';
+  $('mfaCode').value = '';
+  if (data && data.devCode) {
+    $('mfaMsg').innerHTML = `Email isn't configured, so here is your code (dev mode): <strong>${data.devCode}</strong>`;
+  } else {
+    $('mfaMsg').textContent = `Enter the 6-digit code we emailed to ${pendingLogin ? pendingLogin.email : 'you'}.`;
+  }
+  $('mfaCode').focus();
+}
+
+function backToLogin() {
+  pendingLogin = null;
+  $('mfaForm').hidden = true;
+  $('loginForm').hidden = false;
+  $('mfaError').textContent = '';
+  $('loginPassword').value = '';
+}
+
+$('mfaForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('mfaError').textContent = '';
+  if (!pendingLogin) { backToLogin(); return; }
+  try {
+    const data = await api('/api/login/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: pendingLogin.email, code: $('mfaCode').value.trim() }),
+    });
+    localStorage.setItem(TOKEN_KEY, data.token);
+    pendingLogin = null;
+    enterDashboard();
+  } catch (err) {
+    $('mfaError').textContent = err.message;
+  }
+});
+
+$('mfaResend').addEventListener('click', async () => {
+  if (!pendingLogin) { backToLogin(); return; }
+  $('mfaError').textContent = '';
+  try {
+    const data = await api('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(pendingLogin),
+    });
+    if (data.mfaRequired) showMfaStep(data);
+  } catch (err) {
+    $('mfaError').textContent = err.message;
+  }
+});
+
+$('mfaBack').addEventListener('click', backToLogin);
 
 $('logoutBtn').addEventListener('click', async () => {
   try { await api('/api/logout', { method: 'POST', headers: authHeaders() }); } catch (_) {}

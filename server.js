@@ -148,6 +148,22 @@ async function sendResetCode(email, code) {
   return { delivered: true };
 }
 
+async function sendLoginCode(email, code) {
+  const transport = getTransport();
+  if (!transport) {
+    console.log(`\n  [DEV] Login verification code for ${email}: ${code}\n`);
+    return { delivered: false };
+  }
+  await transport.sendMail({
+    from: `"Iman Al Hindawi Admin" <${process.env.GMAIL_USER}>`,
+    to: email,
+    subject: 'Your admin sign-in code',
+    text: `Your sign-in verification code is ${code}.\nIt expires in 10 minutes.\n\nIf you did not just try to sign in to your dashboard, someone may have your password — change it right away.`,
+    html: `<p>Your sign-in verification code is:</p><p style="font-size:26px;letter-spacing:4px;font-weight:700;color:#c83c6d">${code}</p><p>It expires in 10 minutes.</p><p style="color:#888">If you did not just try to sign in to your dashboard, someone may have your password — change it right away.</p>`,
+  });
+  return { delivered: true };
+}
+
 async function getNotifyEmail() {
   if (process.env.NOTIFY_EMAIL) return process.env.NOTIFY_EMAIL;
   const rows = await sql`SELECT email FROM users WHERE role = 'owner' LIMIT 1`;
@@ -288,12 +304,48 @@ async function captureProjectShot(targetUrl, req) {
 /* ============================================================
  *  Auth routes
  * ============================================================ */
+// Step 1 — verify the password, then email a 6-digit code. No token is issued yet.
 app.post('/api/login', rateLimit('login', 8, 10 * 60 * 1000), async (req, res) => {
   const { email, password } = req.body || {};
   const user = await findUserByEmail(email);
   if (!user || !verifyPassword(password || '', user.salt, user.hash)) {
     return res.status(401).json({ error: 'Incorrect email or password' });
   }
+  const code = String(crypto.randomInt(100000, 1000000));
+  const expires = Date.now() + 10 * 60 * 1000;
+  await sql`INSERT INTO login_codes (email, code, expires, attempts)
+            VALUES (${user.email}, ${code}, ${expires}, 0)
+            ON CONFLICT (email) DO UPDATE SET code = ${code}, expires = ${expires}, attempts = 0`;
+  try {
+    const { delivered } = await sendLoginCode(user.email, code);
+    // devCode is only ever returned when email is not configured (local dev).
+    res.json({ mfaRequired: true, email: user.email, delivered, devCode: delivered ? undefined : code });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not send your sign-in code: ' + err.message });
+  }
+});
+
+// Step 2 — exchange the emailed code for a session token.
+app.post('/api/login/verify', rateLimit('login-verify', 12, 10 * 60 * 1000), async (req, res) => {
+  const { email, code } = req.body || {};
+  const user = await findUserByEmail(email);
+  if (!user) return res.status(400).json({ error: 'Start again from the sign-in screen.' });
+  const rows = await sql`SELECT * FROM login_codes WHERE email = ${user.email}`;
+  const entry = rows[0];
+  if (!entry) return res.status(400).json({ error: 'No code found — sign in again to get a new one.' });
+  if (Date.now() > Number(entry.expires)) {
+    await sql`DELETE FROM login_codes WHERE email = ${user.email}`;
+    return res.status(400).json({ error: 'Code expired — sign in again to get a new one.' });
+  }
+  if (entry.attempts >= 5) {
+    await sql`DELETE FROM login_codes WHERE email = ${user.email}`;
+    return res.status(429).json({ error: 'Too many attempts — sign in again to get a new code.' });
+  }
+  if (String(code || '') !== entry.code) {
+    await sql`UPDATE login_codes SET attempts = attempts + 1 WHERE email = ${user.email}`;
+    return res.status(400).json({ error: 'Invalid code' });
+  }
+  await sql`DELETE FROM login_codes WHERE email = ${user.email}`;
   const token = await signToken(user);
   res.json({ token, email: user.email, role: user.role });
 });

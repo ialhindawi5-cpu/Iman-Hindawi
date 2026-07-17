@@ -24,6 +24,20 @@
       <span class="form-error" id="loginError"></span>
       <button type="button" class="link-btn" id="forgotBtn">Forgot password?</button>
     </form>
+
+    <!-- Two-factor step: shown after the password is accepted -->
+    <form class="login-card" id="mfaForm" hidden>
+      <h1>Verify it's you</h1>
+      <p id="mfaMsg">Enter the 6-digit code we emailed you.</p>
+      <input type="text" id="mfaCode" inputmode="numeric" autocomplete="one-time-code"
+             pattern="[0-9]*" maxlength="6" placeholder="6-digit code" required />
+      <button type="submit">Verify &amp; sign in</button>
+      <span class="form-error" id="mfaError"></span>
+      <div class="mfa-links">
+        <button type="button" class="link-btn" id="mfaResend">Resend code</button>
+        <button type="button" class="link-btn" id="mfaBack">Back</button>
+      </div>
+    </form>
   </div>
 
   <!-- Dashboard -->

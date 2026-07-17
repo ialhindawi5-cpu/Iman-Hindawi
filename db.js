@@ -52,6 +52,13 @@ async function doInit() {
     expires bigint NOT NULL,
     attempts int NOT NULL DEFAULT 0
   )`;
+  // Two-factor login codes (emailed after a correct password, required to finish sign-in).
+  await sql`CREATE TABLE IF NOT EXISTS login_codes (
+    email text PRIMARY KEY,
+    code text NOT NULL,
+    expires bigint NOT NULL,
+    attempts int NOT NULL DEFAULT 0
+  )`;
   // token_version invalidates old JWTs when a password changes.
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version int NOT NULL DEFAULT 0`;
   // Rate-limit events (brute-force protection), shared across serverless instances.

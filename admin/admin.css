@@ -83,6 +83,15 @@ button, input, textarea { font-family: inherit; font-size: 1rem; color: inherit;
   padding: 0;
 }
 .link-btn:hover { color: var(--accent-dark); }
+/* Two-factor code step */
+#mfaCode {
+  text-align: center;
+  font-size: 1.5rem;
+  letter-spacing: 0.5em;
+  font-weight: 600;
+  padding-right: 0.5rem;
+}
+.mfa-links { display: flex; justify-content: space-between; align-items: center; margin-top: 0.9rem; }
 
 /* ---------- Dashboard shell (sidebar layout) ---------- */
 html { scroll-behavior: smooth; }
