@@ -77,11 +77,41 @@ function hydrate(c) {
   setText('heroTagline', c.hero.tagline);
   const fullName = `${c.hero.firstName} ${c.hero.lastName}`;
   document.title = fullName;
+  const logo = (c.brand && c.brand.logo) || '';
+
+  // Header brand: optional logo image beside the wordmark text.
   const brand = document.getElementById('brand');
-  if (brand) brand.textContent = fullName.toUpperCase();
+  if (brand) {
+    brand.innerHTML = '';
+    if (logo) {
+      const img = document.createElement('img');
+      img.className = 'brand-logo';
+      img.src = logo;
+      img.alt = '';
+      brand.appendChild(img);
+    }
+    const name = document.createElement('span');
+    name.className = 'brand-name';
+    name.textContent = fullName.toUpperCase();
+    brand.appendChild(name);
+  }
   setText('footerName', fullName);
   setText('footerNameBottom', fullName);
   setText('footerTag', c.hero.tagline);
+
+  // Footer brand: same logo above the name.
+  const footerBrand = document.querySelector('.footer-brand');
+  if (footerBrand) {
+    const existing = footerBrand.querySelector('.footer-logo');
+    if (existing) existing.remove();
+    if (logo) {
+      const img = document.createElement('img');
+      img.className = 'footer-logo';
+      img.src = logo;
+      img.alt = '';
+      footerBrand.insertBefore(img, footerBrand.firstChild);
+    }
+  }
 
   // Intro
   setText('introText', c.intro.text);

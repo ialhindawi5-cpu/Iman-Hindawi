@@ -368,6 +368,26 @@ input:focus, textarea:focus {
   .project-actions { justify-content: flex-start; }
 }
 
+/* Sidebar group headings */
+.side-nav .side-group {
+  font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--ink-soft); font-weight: 600; opacity: 0.65;
+  padding: 0.95rem 0.85rem 0.3rem;
+}
+/* Panel subheadings (grouped Home page) */
+.panel-sub {
+  font-size: 0.92rem; font-weight: 600; color: var(--accent-dark);
+  margin: 1.5rem 0 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--line);
+}
+.panel-sub:first-of-type { margin-top: 0.5rem; }
+/* Logo preview fits the whole logo instead of cropping it */
+.logo-preview {
+  aspect-ratio: 16 / 7;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-color: #fff;
+}
+
 /* Users list */
 .user-list { list-style: none; margin-bottom: 1.2rem; }
 .user-list li {

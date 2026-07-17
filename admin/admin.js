@@ -59,6 +59,21 @@ $('logoutBtn').addEventListener('click', async () => {
   location.reload();
 });
 
+/* ---------- image target helpers (sections + logo) ---------- */
+// The logo lives at content.brand.logo; the pillar images at content.sections[k].image.
+function sectionImage(section) {
+  if (section === 'logo') return content.brand && content.brand.logo;
+  return content.sections && content.sections[section] && content.sections[section].image;
+}
+function setSectionImage(section, url) {
+  if (section === 'logo') {
+    content.brand = content.brand || {};
+    content.brand.logo = url;
+    return;
+  }
+  if (content.sections && content.sections[section]) content.sections[section].image = url;
+}
+
 /* ---------- content populate & collect ---------- */
 function populate() {
   document.querySelectorAll('[data-path]').forEach((el) => {
@@ -72,7 +87,7 @@ function populate() {
       .map((s) => `${s.label} | ${s.url}`).join('\n');
   });
   document.querySelectorAll('[data-preview]').forEach((el) => {
-    applyPreview(el, content.sections[el.dataset.preview]?.image);
+    applyPreview(el, sectionImage(el.dataset.preview));
   });
   renderProjectsEditor();
 }
@@ -116,7 +131,7 @@ document.querySelectorAll('[data-remove]').forEach((btn) => {
     btn.disabled = true;
     try {
       await api(`/api/upload/${section}`, { method: 'DELETE', headers: authHeaders() });
-      if (content && content.sections && content.sections[section]) content.sections[section].image = '';
+      setSectionImage(section, '');
       applyPreview(document.querySelector(`[data-preview="${section}"]`), '');
       statusEl.textContent = 'Removed ✓';
       statusEl.classList.add('ok');
@@ -142,7 +157,7 @@ document.querySelectorAll('[data-upload]').forEach((input) => {
     form.append('image', file);
     try {
       const data = await api(`/api/upload/${section}`, { method: 'POST', headers: authHeaders(), body: form });
-      content.sections[section].image = data.path;
+      setSectionImage(section, data.path);
       applyPreview(document.querySelector(`[data-preview="${section}"]`), data.path);
       statusEl.textContent = 'Uploaded ✓';
       statusEl.classList.add('ok');

@@ -48,14 +48,18 @@
 
       <nav class="side-nav" id="sideNav">
         <a href="#panel-messages" class="active">Messages<span class="nav-badge" id="msgBadge" hidden>0</span></a>
-        <a href="#panel-hero">Hero</a>
-        <a href="#panel-intro">Intro</a>
-        <a href="#panel-actress">Project Management</a>
-        <a href="#panel-entrepreneur">Data Analytics</a>
-        <a href="#panel-philanthropist">Web Projects</a>
-        <a href="#panel-quote">Quote</a>
+
+        <span class="side-group">Pages</span>
+        <a href="#panel-home">Home</a>
+        <a href="#panel-actress">Projects</a>
+        <a href="#panel-entrepreneur">Data</a>
+        <a href="#panel-philanthropist">Web</a>
         <a href="#panel-contact">Contact</a>
+
+        <span class="side-group">Settings</span>
+        <a href="#panel-contactinfo">Contact info</a>
         <a href="#panel-users">Admin Users</a>
+        <a href="#panel-logo">Logo</a>
       </nav>
 
       <div class="side-actions">
@@ -78,26 +82,30 @@
           <div class="msg-list" id="msgList"></div>
         </section>
 
-        <!-- Hero -->
-        <section class="panel" id="panel-hero">
-          <h2>Hero</h2>
+        <!-- Home page (Hero + Intro + Quote) -->
+        <section class="panel" id="panel-home">
+          <h2>Home page</h2>
+          <p class="panel-hint">The landing section visitors see first.</p>
+
+          <h3 class="panel-sub">Hero</h3>
           <div class="grid-2">
             <label>Eyebrow<input data-path="hero.eyebrow" /></label>
             <label>Tagline<input data-path="hero.tagline" /></label>
             <label>First name<input data-path="hero.firstName" /></label>
             <label>Last name<input data-path="hero.lastName" /></label>
           </div>
-        </section>
 
-        <!-- Intro -->
-        <section class="panel" id="panel-intro">
-          <h2>Intro</h2>
+          <h3 class="panel-sub">Intro</h3>
           <label>Intro paragraph<textarea rows="3" data-path="intro.text"></textarea></label>
+
+          <h3 class="panel-sub">Quote</h3>
+          <label>Quote<textarea rows="2" data-path="quote.text"></textarea></label>
+          <label>Attribution<input data-path="quote.cite" /></label>
         </section>
 
         <!-- Pillar sections -->
         <section class="panel" id="panel-actress" data-section="actress">
-          <h2>Section · Project Management</h2>
+          <h2>Projects</h2>
           <div class="section-grid">
             <div class="media-col">
               <div class="img-preview" data-preview="actress"><span>No image</span></div>
@@ -118,7 +126,7 @@
         </section>
 
         <section class="panel" id="panel-entrepreneur" data-section="entrepreneur">
-          <h2>Section · Data Analytics</h2>
+          <h2>Data</h2>
           <div class="section-grid">
             <div class="media-col">
               <div class="img-preview" data-preview="entrepreneur"><span>No image</span></div>
@@ -139,7 +147,7 @@
         </section>
 
         <section class="panel" id="panel-philanthropist" data-section="philanthropist">
-          <h2>Section · Web Projects</h2>
+          <h2>Web</h2>
           <div class="section-grid">
             <div class="media-col">
               <div class="img-preview" data-preview="philanthropist"><span>No image</span></div>
@@ -170,26 +178,42 @@
           </div>
         </section>
 
-        <!-- Quote -->
-        <section class="panel" id="panel-quote">
-          <h2>Quote</h2>
-          <label>Quote<textarea rows="2" data-path="quote.text"></textarea></label>
-          <label>Attribution<input data-path="quote.cite" /></label>
-        </section>
-
-        <!-- Contact -->
+        <!-- Contact page (text only; email/phone/socials live under Settings) -->
         <section class="panel" id="panel-contact">
-          <h2>Contact</h2>
+          <h2>Contact page</h2>
+          <p class="panel-hint">The text shown in your website's contact section. Your email, phone and Instagram are under <strong>Settings → Contact info</strong>.</p>
           <div class="grid-2">
             <label>Eyebrow<input data-path="contact.eyebrow" /></label>
-            <label>Email<input data-path="contact.email" /></label>
             <label>Heading<input data-path="contact.heading" /></label>
-            <label>Sub text<input data-path="contact.sub" /></label>
           </div>
-          <label>Social links (one per line — <em>Label | URL</em>)
+          <label>Sub text<input data-path="contact.sub" /></label>
+        </section>
+
+        <!-- Settings · Contact info -->
+        <section class="panel" id="panel-contactinfo">
+          <h2>Contact info</h2>
+          <p class="panel-hint">Your public contact details — shown in the site footer and contact section.</p>
+          <label>Email<input data-path="contact.email" /></label>
+          <label>Social &amp; contact links (one per line — <em>Label | URL</em>)
             <textarea rows="4" data-socials="contact.socials"></textarea>
-            <small class="field-note">The <strong>Label</strong> is the text shown next to the icon (e.g. your Instagram handle <em>eman_s.hindawi</em>); the <strong>URL</strong> is where it links. Example: <code>eman_s.hindawi | https://www.instagram.com/eman_s.hindawi/</code></small>
+            <small class="field-note">The <strong>Label</strong> is the text shown next to the icon (e.g. your Instagram handle <em>eman_s.hindawi</em>, or your phone number); the <strong>URL</strong> is where it links. Examples:<br /><code>eman_s.hindawi | https://www.instagram.com/eman_s.hindawi/</code><br /><code>+961 76 934 110 | tel:+96176934110</code></small>
           </label>
+        </section>
+
+        <!-- Settings · Logo -->
+        <section class="panel" id="panel-logo">
+          <h2>Logo</h2>
+          <p class="panel-hint">Upload a logo image to show next to your name in the site header and footer. A small PNG with a transparent background works best. Your name text is edited under <strong>Home → Hero</strong>.</p>
+          <div class="section-grid">
+            <div class="media-col">
+              <div class="img-preview logo-preview" data-preview="logo"><span>No logo</span></div>
+              <label class="upload-btn">Upload logo
+                <input type="file" accept="image/*" data-upload="logo" hidden />
+              </label>
+              <button type="button" class="btn ghost remove-btn" data-remove="logo" hidden>Remove logo</button>
+              <small class="upload-status" data-status="logo"></small>
+            </div>
+          </div>
         </section>
 
         <!-- Admin users -->

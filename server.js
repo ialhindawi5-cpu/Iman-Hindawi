@@ -457,7 +457,20 @@ function looksLikeImage(b) {
   if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return true; // WEBP
   return false;
 }
-const ALLOWED_SECTIONS = new Set(['actress', 'entrepreneur', 'philanthropist']);
+// 'logo' is not a pillar section — it lives at content.brand.logo. These helpers
+// keep the upload/delete routes working for both targets.
+const ALLOWED_SECTIONS = new Set(['actress', 'entrepreneur', 'philanthropist', 'logo']);
+function getSectionImage(content, section) {
+  if (section === 'logo') return (content && content.brand && content.brand.logo) || '';
+  return (content && content.sections && content.sections[section] && content.sections[section].image) || '';
+}
+function setSectionImage(content, section, url) {
+  if (!content) return false;
+  if (section === 'logo') { content.brand = content.brand || {}; content.brand.logo = url; return true; }
+  if (content.sections && content.sections[section]) { content.sections[section].image = url; return true; }
+  return false;
+}
+
 app.post('/api/upload/:section', requireAuth, upload.single('image'), async (req, res) => {
   if (!ALLOWED_SECTIONS.has(req.params.section)) return res.status(400).json({ error: 'Invalid section' });
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
@@ -465,10 +478,7 @@ app.post('/api/upload/:section', requireAuth, upload.single('image'), async (req
   try {
     const url = await storeImage(req.params.section, req.file, req);
     const content = await getContent();
-    if (content && content.sections && content.sections[req.params.section]) {
-      content.sections[req.params.section].image = url;
-      await saveContent(content);
-    }
+    if (setSectionImage(content, req.params.section, url)) await saveContent(content);
     res.json({ ok: true, path: url });
   } catch (err) {
     res.status(500).json({ error: 'Upload failed: ' + err.message });
@@ -499,14 +509,9 @@ app.delete('/api/upload/:section', requireAuth, async (req, res) => {
   if (!ALLOWED_SECTIONS.has(section)) return res.status(400).json({ error: 'Invalid section' });
   try {
     const content = await getContent();
-    const current = content && content.sections && content.sections[section]
-      ? content.sections[section].image
-      : '';
+    const current = getSectionImage(content, section);
     if (current) await deleteStoredImage(current, req);
-    if (content && content.sections && content.sections[section]) {
-      content.sections[section].image = '';
-      await saveContent(content);
-    }
+    if (setSectionImage(content, section, '')) await saveContent(content);
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'Remove failed: ' + err.message });
