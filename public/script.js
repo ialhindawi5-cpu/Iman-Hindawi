@@ -114,11 +114,27 @@ function hydrate(c) {
         if (!href) return;
         a.className = 'social-icon';
         a.href = href;
-        a.title = brand.name;
-        a.setAttribute('aria-label', brand.name);
-        a.innerHTML = brand.svg;
         a.target = '_blank';
         a.rel = 'noopener';
+
+        const glyph = document.createElement('span');
+        glyph.className = 'social-glyph';
+        glyph.innerHTML = brand.svg; // trusted, constant markup
+        a.appendChild(glyph);
+
+        // The label (e.g. "eman_s.hindawi") shows next to the icon. Skip it only
+        // when it still holds the raw platform name / pasted URL, so old data
+        // degrades to an icon-only link instead of showing junk.
+        const label = (s.label || '').trim();
+        const handle = label && !brand.match.test(label) ? label : '';
+        if (handle) {
+          const text = document.createElement('span');
+          text.className = 'social-handle';
+          text.textContent = handle;
+          a.appendChild(text);
+        }
+        a.title = brand.name;
+        a.setAttribute('aria-label', handle ? `${brand.name}: ${handle}` : brand.name);
       } else {
         if (!s.label) return;
         a.textContent = s.label;

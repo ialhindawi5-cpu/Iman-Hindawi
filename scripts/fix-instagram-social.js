@@ -13,12 +13,12 @@ const { sql } = require('../db');
   const cleaned = socials.map((s) => {
     const hint = `${s.label || ''} ${s.url || ''}`;
     if (/instagram/i.test(hint)) {
-      return { label: 'Instagram', url: 'https://www.instagram.com/eman_s.hindawi/' };
+      return { label: 'eman_s.hindawi', url: 'https://www.instagram.com/eman_s.hindawi/' };
     }
     return s;
   });
   if (!cleaned.some((s) => /instagram/i.test(`${s.label} ${s.url}`))) {
-    cleaned.unshift({ label: 'Instagram', url: 'https://www.instagram.com/eman_s.hindawi/' });
+    cleaned.unshift({ label: 'eman_s.hindawi', url: 'https://www.instagram.com/eman_s.hindawi/' });
   }
   data.contact.socials = cleaned;
 
