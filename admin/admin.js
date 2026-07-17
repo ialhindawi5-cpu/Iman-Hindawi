@@ -153,6 +153,7 @@ async function initTurnstile() {
     if (!window.turnstile) return;
     turnstileWidgetId = window.turnstile.render('#turnstileBox', {
       sitekey: turnstileSiteKey,
+      theme: 'light',
       callback: (token) => { turnstileToken = token; $('loginError').textContent = ''; },
       'error-callback': () => { turnstileToken = ''; },
       'expired-callback': () => { turnstileToken = ''; },
