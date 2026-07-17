@@ -31,16 +31,25 @@ const CSP = [
   "img-src 'self' data: https://*.public.blob.vercel-storage.com",
   "connect-src 'self'",
   "object-src 'none'",
+  "frame-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
+  "worker-src 'self'",
+  "manifest-src 'self'",
+  "upgrade-insecure-requests",
 ].join('; ');
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), browsing-topics=()');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), browsing-topics=(), interest-cohort=()');
   res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   res.setHeader('Content-Security-Policy', CSP);
+  // Cross-origin isolation / anti-leak hardening.
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+  res.setHeader('X-DNS-Prefetch-Control', 'off');
   next();
 });
 
@@ -292,6 +301,13 @@ async function captureProjectShot(targetUrl, req) {
     const reason = (meta && (meta.message || meta.status)) || `HTTP ${metaRes.status}`;
     throw new Error(`Screenshot service could not capture that URL (${reason}).`);
   }
+  // SSRF guard: only ever download the screenshot from Microlink's own hosts,
+  // never an arbitrary URL echoed back in the response.
+  let shotHost = '';
+  try { shotHost = new URL(shotUrl).hostname; } catch { /* handled below */ }
+  if (!/(^|\.)microlink\.io$/i.test(shotHost)) {
+    throw new Error('Screenshot service returned an unexpected host.');
+  }
 
   const imgRes = await fetch(shotUrl);
   if (!imgRes.ok) throw new Error('Could not download the captured screenshot.');
@@ -321,7 +337,8 @@ app.post('/api/login', rateLimit('login', 8, 10 * 60 * 1000), async (req, res) =
     // devCode is only ever returned when email is not configured (local dev).
     res.json({ mfaRequired: true, email: user.email, delivered, devCode: delivered ? undefined : code });
   } catch (err) {
-    res.status(500).json({ error: 'Could not send your sign-in code: ' + err.message });
+    console.error('Login code email failed:', err.message);
+    res.status(500).json({ error: 'Could not send your sign-in code. Please try again in a moment.' });
   }
 });
 
@@ -388,7 +405,8 @@ app.post('/api/request-reset', rateLimit('reset', 5, 15 * 60 * 1000), async (req
       const { delivered } = await sendResetCode(user.email, code);
       return res.json({ ok: true, delivered, devCode: delivered ? undefined : code });
     } catch (err) {
-      return res.status(500).json({ error: 'Could not send email: ' + err.message });
+      console.error('Reset code email failed:', err.message);
+      return res.status(500).json({ error: 'Could not send email. Please try again in a moment.' });
     }
   }
   res.json({ ok: true, delivered: false });
@@ -480,7 +498,7 @@ app.put('/api/content', requireAuth, async (req, res) => {
 });
 
 // Capture (or refresh) a screenshot for a Web-Projects slide from just its URL.
-app.post('/api/projects/screenshot', requireAuth, async (req, res) => {
+app.post('/api/projects/screenshot', requireAuth, rateLimit('screenshot', 20, 10 * 60 * 1000), async (req, res) => {
   let target = String(req.body?.url || '').trim();
   if (!target) return res.status(400).json({ error: 'A project URL is required.' });
   if (!/^https?:\/\//i.test(target)) target = `https://${target}`;
@@ -523,7 +541,7 @@ function setSectionImage(content, section, url) {
   return false;
 }
 
-app.post('/api/upload/:section', requireAuth, upload.single('image'), async (req, res) => {
+app.post('/api/upload/:section', requireAuth, rateLimit('upload', 40, 10 * 60 * 1000), upload.single('image'), async (req, res) => {
   if (!ALLOWED_SECTIONS.has(req.params.section)) return res.status(400).json({ error: 'Invalid section' });
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
   if (!looksLikeImage(req.file.buffer)) return res.status(400).json({ error: 'File is not a valid image' });
@@ -533,7 +551,8 @@ app.post('/api/upload/:section', requireAuth, upload.single('image'), async (req
     if (setSectionImage(content, req.params.section, url)) await saveContent(content);
     res.json({ ok: true, path: url });
   } catch (err) {
-    res.status(500).json({ error: 'Upload failed: ' + err.message });
+    console.error('Upload failed:', err.message);
+    res.status(500).json({ error: 'Upload failed. Please try again.' });
   }
 });
 
@@ -566,7 +585,8 @@ app.delete('/api/upload/:section', requireAuth, async (req, res) => {
     if (setSectionImage(content, section, '')) await saveContent(content);
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: 'Remove failed: ' + err.message });
+    console.error('Remove failed:', err.message);
+    res.status(500).json({ error: 'Remove failed. Please try again.' });
   }
 });
 
