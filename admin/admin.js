@@ -1,9 +1,14 @@
-const TOKEN_KEY = 'imanAdminToken';
 let content = null;
 let currentUser = null;
 
 /* ---------- helpers ---------- */
 const $ = (id) => document.getElementById(id);
+// The session lives in an httpOnly cookie (unreadable here). We only read the
+// CSRF cookie and echo it back on state-changing requests (double-submit).
+function getCsrf() {
+  const m = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
 function getPath(obj, path) {
   return path.split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
 }
@@ -14,17 +19,17 @@ function setPath(obj, path, value) {
   target[last] = value;
 }
 function authHeaders(extra = {}) {
-  return { 'x-admin-token': localStorage.getItem(TOKEN_KEY) || '', ...extra };
+  // Harmless on GETs; required on writes for the CSRF double-submit check.
+  return { 'x-csrf-token': getCsrf(), ...extra };
 }
 async function api(url, options = {}) {
-  const res = await fetch(url, options);
+  // Same-origin so the httpOnly session cookie rides along automatically.
+  const res = await fetch(url, { credentials: 'same-origin', ...options });
   let data = {};
   try { data = await res.json(); } catch (_) {}
   if (!res.ok) {
-    if (res.status === 401 && localStorage.getItem(TOKEN_KEY)) {
-      localStorage.removeItem(TOKEN_KEY);
-      location.reload();
-    }
+    // Session expired/invalid while using the dashboard → back to the login screen.
+    if (res.status === 401 && dash && !dash.hidden) location.reload();
     throw new Error(data.error || 'Request failed');
   }
   return data;
@@ -51,9 +56,8 @@ $('loginForm').addEventListener('submit', async (e) => {
     if (data.mfaRequired) {
       pendingLogin = { email, password };
       showMfaStep(data);
-    } else if (data.token) {
-      // Fallback for any non-2FA response.
-      localStorage.setItem(TOKEN_KEY, data.token);
+    } else if (data.ok) {
+      // Fallback for any non-2FA response (session cookie already set).
       enterDashboard();
     }
   } catch (err) {
@@ -87,12 +91,12 @@ $('mfaForm').addEventListener('submit', async (e) => {
   $('mfaError').textContent = '';
   if (!pendingLogin) { backToLogin(); return; }
   try {
-    const data = await api('/api/login/verify', {
+    await api('/api/login/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: pendingLogin.email, code: $('mfaCode').value.trim() }),
     });
-    localStorage.setItem(TOKEN_KEY, data.token);
+    // Session cookie is now set by the server; nothing to store client-side.
     pendingLogin = null;
     enterDashboard();
   } catch (err) {
@@ -119,7 +123,6 @@ $('mfaBack').addEventListener('click', backToLogin);
 
 $('logoutBtn').addEventListener('click', async () => {
   try { await api('/api/logout', { method: 'POST', headers: authHeaders() }); } catch (_) {}
-  localStorage.removeItem(TOKEN_KEY);
   location.reload();
 });
 
@@ -637,10 +640,7 @@ $('confirmResetBtn').addEventListener('click', async () => {
       }),
     });
     $('resetOk').textContent = 'Password updated. Please sign in with your new password.';
-    setTimeout(() => {
-      localStorage.removeItem(TOKEN_KEY);
-      location.reload();
-    }, 1800);
+    setTimeout(() => { location.reload(); }, 1800);
   } catch (err) {
     $('resetError').textContent = err.message;
   }
@@ -687,10 +687,9 @@ document.querySelectorAll('input[type="password"]').forEach((input) => {
   });
 });
 
-if (localStorage.getItem(TOKEN_KEY)) {
-  enterDashboard().catch(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    loginScreen.hidden = false;
-    dash.hidden = true;
-  });
-}
+// Try to resume via the httpOnly session cookie; if it's missing/expired the
+// account check 401s and we fall back to the login screen.
+enterDashboard().catch(() => {
+  loginScreen.hidden = false;
+  dash.hidden = true;
+});

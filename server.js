@@ -106,9 +106,55 @@ async function signToken(user) {
     .setExpirationTime('2d')
     .sign(AUTH_SECRET);
 }
+
+/* ---- Cookie session (httpOnly) + double-submit CSRF ---- */
+const SESSION_COOKIE = 'admin_session';
+const CSRF_COOKIE = 'csrf_token';
+const SESSION_MAX_AGE = 2 * 24 * 60 * 60 * 1000; // 2 days, matches the JWT exp
+const cookieSecure = () => !!process.env.VERCEL; // Secure over HTTPS in prod; allow http on localhost
+
+function parseCookies(req) {
+  const out = {};
+  (req.headers.cookie || '').split(';').forEach((part) => {
+    const i = part.indexOf('=');
+    if (i > -1) out[part.slice(0, i).trim()] = decodeURIComponent(part.slice(i + 1).trim());
+  });
+  return out;
+}
+function safeEqual(a, b) {
+  const ba = Buffer.from(String(a || ''));
+  const bb = Buffer.from(String(b || ''));
+  return ba.length === bb.length && ba.length > 0 && crypto.timingSafeEqual(ba, bb);
+}
+// The session JWT is httpOnly (JS can't read it). The CSRF token is a separate,
+// JS-readable cookie the client must echo back in the x-csrf-token header on
+// every state-changing request (double-submit) — combined with SameSite=Strict.
+function issueSession(res, token) {
+  const secure = cookieSecure();
+  const csrf = crypto.randomBytes(32).toString('hex');
+  res.cookie(SESSION_COOKIE, token, {
+    httpOnly: true, secure, sameSite: 'strict', path: '/', maxAge: SESSION_MAX_AGE,
+  });
+  res.cookie(CSRF_COOKIE, csrf, {
+    httpOnly: false, secure, sameSite: 'strict', path: '/', maxAge: SESSION_MAX_AGE,
+  });
+}
+function clearSession(res) {
+  const opts = { secure: cookieSecure(), sameSite: 'strict', path: '/' };
+  res.clearCookie(SESSION_COOKIE, { ...opts, httpOnly: true });
+  res.clearCookie(CSRF_COOKIE, { ...opts, httpOnly: false });
+}
+
 async function requireAuth(req, res, next) {
-  const token = req.get('x-admin-token');
+  const cookies = parseCookies(req);
+  const token = cookies[SESSION_COOKIE];
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  // CSRF: state-changing requests must echo the CSRF cookie in a header.
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    if (!safeEqual(req.get('x-csrf-token'), cookies[CSRF_COOKIE])) {
+      return res.status(403).json({ error: 'Invalid or missing CSRF token' });
+    }
+  }
   try {
     const { payload } = await jwtVerify(token, AUTH_SECRET, { algorithms: ['HS256'] });
     // Confirm the user still exists and the token hasn't been invalidated by a password change.
@@ -364,10 +410,14 @@ app.post('/api/login/verify', rateLimit('login-verify', 12, 10 * 60 * 1000), asy
   }
   await sql`DELETE FROM login_codes WHERE email = ${user.email}`;
   const token = await signToken(user);
-  res.json({ token, email: user.email, role: user.role });
+  issueSession(res, token);
+  res.json({ ok: true, email: user.email, role: user.role });
 });
 
-app.post('/api/logout', requireAuth, (_req, res) => res.json({ ok: true }));
+app.post('/api/logout', requireAuth, (_req, res) => {
+  clearSession(res);
+  res.json({ ok: true });
+});
 
 // Admin-only config check. Reports presence of env vars as booleans — never their values.
 app.get('/api/_diag', requireAuth, (req, res) => {
