@@ -47,11 +47,15 @@ $('loginForm').addEventListener('submit', async (e) => {
   $('loginError').textContent = '';
   const email = $('loginEmail').value.trim();
   const password = $('loginPassword').value;
+  if (turnstileSiteKey && !turnstileToken) {
+    $('loginError').textContent = 'Please complete the verification below.';
+    return;
+  }
   try {
     const data = await api('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, turnstileToken }),
     });
     if (data.mfaRequired) {
       pendingLogin = { email, password };
@@ -62,6 +66,8 @@ $('loginForm').addEventListener('submit', async (e) => {
     }
   } catch (err) {
     $('loginError').textContent = err.message;
+  } finally {
+    resetTurnstile(); // tokens are single-use — refresh for the next attempt
   }
 });
 
@@ -108,18 +114,62 @@ $('mfaResend').addEventListener('click', async () => {
   if (!pendingLogin) { backToLogin(); return; }
   $('mfaError').textContent = '';
   try {
-    const data = await api('/api/login', {
+    // Dedicated resend — no bot challenge needed (the login step already passed).
+    const data = await api('/api/login/resend', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(pendingLogin),
+      body: JSON.stringify({ email: pendingLogin.email }),
     });
-    if (data.mfaRequired) showMfaStep(data);
+    // Refresh only the dev-code hint / message; stay on the code step.
+    if (data.devCode) {
+      $('mfaMsg').innerHTML = `Email isn't configured, so here is your code (dev mode): <strong>${data.devCode}</strong>`;
+    } else {
+      $('mfaMsg').textContent = `A new code was sent to ${pendingLogin.email}.`;
+    }
+    $('mfaCode').value = '';
+    $('mfaCode').focus();
   } catch (err) {
     $('mfaError').textContent = err.message;
   }
 });
 
 $('mfaBack').addEventListener('click', backToLogin);
+
+/* ---------- Cloudflare Turnstile (bot challenge on login) ---------- */
+let turnstileSiteKey = '';
+let turnstileToken = '';
+let turnstileWidgetId = null;
+
+async function initTurnstile() {
+  if (turnstileSiteKey) return; // already set up
+  try {
+    const cfg = await api('/api/login-config');
+    turnstileSiteKey = cfg.turnstileSiteKey || '';
+  } catch (_) { turnstileSiteKey = ''; }
+  if (!turnstileSiteKey) return; // feature off — login works without it
+
+  $('turnstileBox').hidden = false;
+  window.onTurnstileLoad = () => {
+    if (!window.turnstile) return;
+    turnstileWidgetId = window.turnstile.render('#turnstileBox', {
+      sitekey: turnstileSiteKey,
+      callback: (token) => { turnstileToken = token; $('loginError').textContent = ''; },
+      'error-callback': () => { turnstileToken = ''; },
+      'expired-callback': () => { turnstileToken = ''; },
+    });
+  };
+  const s = document.createElement('script');
+  s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit';
+  s.async = true;
+  s.defer = true;
+  document.head.appendChild(s);
+}
+function resetTurnstile() {
+  turnstileToken = '';
+  if (turnstileWidgetId !== null && window.turnstile) {
+    try { window.turnstile.reset(turnstileWidgetId); } catch (_) {}
+  }
+}
 
 $('logoutBtn').addEventListener('click', async () => {
   try { await api('/api/logout', { method: 'POST', headers: authHeaders() }); } catch (_) {}
@@ -688,8 +738,9 @@ document.querySelectorAll('input[type="password"]').forEach((input) => {
 });
 
 // Try to resume via the httpOnly session cookie; if it's missing/expired the
-// account check 401s and we fall back to the login screen.
+// account check 401s and we fall back to the login screen (with the bot challenge).
 enterDashboard().catch(() => {
   loginScreen.hidden = false;
   dash.hidden = true;
+  initTurnstile();
 });

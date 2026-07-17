@@ -92,6 +92,8 @@ button, input, textarea { font-family: inherit; font-size: 1rem; color: inherit;
   padding-right: 0.5rem;
 }
 .mfa-links { display: flex; justify-content: space-between; align-items: center; margin-top: 0.9rem; }
+/* Cloudflare Turnstile widget on the login form */
+.turnstile-box { display: flex; justify-content: center; margin: 0.2rem 0 1.1rem; min-height: 65px; }
 
 /* ---------- Dashboard shell (sidebar layout) ---------- */
 html { scroll-behavior: smooth; }

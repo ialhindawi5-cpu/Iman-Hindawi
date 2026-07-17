@@ -22,29 +22,36 @@ app.set('trust proxy', true);
 app.use(express.json({ limit: '1mb' }));
 
 // ---------- Security headers (applied to API + local static) ----------
-const CSP = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "script-src 'self'",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: https://*.public.blob.vercel-storage.com",
-  "connect-src 'self'",
-  "object-src 'none'",
-  "frame-src 'none'",
-  "frame-ancestors 'none'",
-  "form-action 'self'",
-  "worker-src 'self'",
-  "manifest-src 'self'",
-  "upgrade-insecure-requests",
-].join('; ');
+// Cloudflare Turnstile (bot challenge) needs its script/frame/connect on the
+// admin login only — the public site stays on the strict policy.
+const CF_TURNSTILE = 'https://challenges.cloudflare.com';
+function buildCSP(admin) {
+  return [
+    "default-src 'self'",
+    "base-uri 'self'",
+    `script-src 'self'${admin ? ' ' + CF_TURNSTILE : ''}`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: https://*.public.blob.vercel-storage.com",
+    `connect-src 'self'${admin ? ' ' + CF_TURNSTILE : ''}`,
+    "object-src 'none'",
+    `frame-src ${admin ? CF_TURNSTILE : "'none'"}`,
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+    "worker-src 'self'",
+    "manifest-src 'self'",
+    "upgrade-insecure-requests",
+  ].join('; ');
+}
+const CSP = buildCSP(false);
+const CSP_ADMIN = buildCSP(true);
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), browsing-topics=(), interest-cohort=()');
   res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
-  res.setHeader('Content-Security-Policy', CSP);
+  res.setHeader('Content-Security-Policy', req.path.startsWith('/admin') ? CSP_ADMIN : CSP);
   // Cross-origin isolation / anti-leak hardening.
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
@@ -105,6 +112,28 @@ async function signToken(user) {
     .setIssuedAt()
     .setExpirationTime('2d')
     .sign(AUTH_SECRET);
+}
+
+// Cloudflare Turnstile: verify the client token server-side. Disabled (returns
+// true) until TURNSTILE_SECRET_KEY is set, so login keeps working before setup.
+async function verifyTurnstile(token, ip) {
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+  if (!secret) return true;        // feature off
+  if (!token) return false;
+  try {
+    const body = new URLSearchParams({ secret, response: String(token) });
+    if (ip && ip !== 'unknown') body.append('remoteip', ip);
+    const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+    });
+    const data = await r.json().catch(() => ({}));
+    return !!data.success;
+  } catch (err) {
+    console.error('Turnstile verify failed:', err.message);
+    return false;
+  }
 }
 
 /* ---- Cookie session (httpOnly) + double-submit CSRF ---- */
@@ -366,9 +395,19 @@ async function captureProjectShot(targetUrl, req) {
 /* ============================================================
  *  Auth routes
  * ============================================================ */
+// Public: tells the login page whether to render the Turnstile widget (site key
+// is public by design; the secret never leaves the server).
+app.get('/api/login-config', (_req, res) => {
+  res.json({ turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || '' });
+});
+
 // Step 1 — verify the password, then email a 6-digit code. No token is issued yet.
 app.post('/api/login', rateLimit('login', 8, 10 * 60 * 1000), async (req, res) => {
   const { email, password } = req.body || {};
+  // Bot challenge first (no-op until Turnstile is configured).
+  if (!(await verifyTurnstile(req.body?.turnstileToken, clientIp(req)))) {
+    return res.status(400).json({ error: 'Verification failed. Please complete the challenge and try again.' });
+  }
   const user = await findUserByEmail(email);
   if (!user || !verifyPassword(password || '', user.salt, user.hash)) {
     return res.status(401).json({ error: 'Incorrect email or password' });
@@ -412,6 +451,29 @@ app.post('/api/login/verify', rateLimit('login-verify', 12, 10 * 60 * 1000), asy
   const token = await signToken(user);
   issueSession(res, token);
   res.json({ ok: true, email: user.email, role: user.role });
+});
+
+// Resend the 2FA code. Only works if a code was already issued (i.e. the
+// password + bot challenge already passed), so it can't be used to bypass them.
+app.post('/api/login/resend', rateLimit('login-resend', 5, 10 * 60 * 1000), async (req, res) => {
+  const user = await findUserByEmail(req.body?.email);
+  if (user) {
+    const rows = await sql`SELECT 1 FROM login_codes WHERE email = ${user.email}`;
+    if (rows[0]) {
+      const code = String(crypto.randomInt(100000, 1000000));
+      const expires = Date.now() + 10 * 60 * 1000;
+      await sql`UPDATE login_codes SET code = ${code}, expires = ${expires}, attempts = 0 WHERE email = ${user.email}`;
+      try {
+        const { delivered } = await sendLoginCode(user.email, code);
+        return res.json({ ok: true, delivered, devCode: delivered ? undefined : code });
+      } catch (err) {
+        console.error('Login code resend failed:', err.message);
+        return res.status(500).json({ error: 'Could not resend the code. Please try again in a moment.' });
+      }
+    }
+  }
+  // Don't reveal whether the email/code exists.
+  res.json({ ok: true, delivered: true });
 });
 
 app.post('/api/logout', requireAuth, (_req, res) => {

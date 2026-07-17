@@ -22,6 +22,13 @@
       },
       "continue": true
     },
+    {
+      "src": "/admin(.*)",
+      "headers": {
+        "Content-Security-Policy": "default-src 'self'; base-uri 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.public.blob.vercel-storage.com; connect-src 'self' https://challenges.cloudflare.com; object-src 'none'; frame-src https://challenges.cloudflare.com; frame-ancestors 'none'; form-action 'self'; worker-src 'self'; manifest-src 'self'; upgrade-insecure-requests"
+      },
+      "continue": true
+    },
     { "src": "/api/(.*)", "dest": "/server.js" },
     { "src": "/admin", "status": 308, "headers": { "Location": "/admin/" } },
     { "src": "/admin/", "dest": "/admin/index.html" },
