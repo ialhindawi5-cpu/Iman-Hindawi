@@ -116,23 +116,30 @@ async function signToken(user) {
 
 // Cloudflare Turnstile: verify the client token server-side. Disabled (returns
 // true) until TURNSTILE_SECRET_KEY is set, so login keeps working before setup.
-async function verifyTurnstile(token, ip) {
+// Returns { ok, codes } — codes are Cloudflare's documented error-codes, logged
+// server-side so a misconfiguration is diagnosable from the Vercel runtime logs.
+async function verifyTurnstile(token) {
   const secret = process.env.TURNSTILE_SECRET_KEY;
-  if (!secret) return true;        // feature off
-  if (!token) return false;
+  if (!secret) return { ok: true, codes: [] };        // feature off
+  if (!token) return { ok: false, codes: ['missing-input-response'] };
   try {
+    // NOTE: `remoteip` is deliberately NOT sent. Cloudflare validates it against
+    // the address that solved the challenge, and behind Vercel's proxy (or when
+    // the browser reaches Cloudflare over IPv6 and Vercel over IPv4) the two
+    // differ — which rejects a perfectly good token.
     const body = new URLSearchParams({ secret, response: String(token) });
-    if (ip && ip !== 'unknown') body.append('remoteip', ip);
     const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body,
     });
     const data = await r.json().catch(() => ({}));
-    return !!data.success;
+    const codes = Array.isArray(data['error-codes']) ? data['error-codes'] : [];
+    if (!data.success) console.error('Turnstile rejected token:', codes.join(', ') || 'no error-codes');
+    return { ok: !!data.success, codes };
   } catch (err) {
     console.error('Turnstile verify failed:', err.message);
-    return false;
+    return { ok: false, codes: ['internal-error'] };
   }
 }
 
@@ -405,8 +412,20 @@ app.get('/api/login-config', (_req, res) => {
 app.post('/api/login', rateLimit('login', 8, 10 * 60 * 1000), async (req, res) => {
   const { email, password } = req.body || {};
   // Bot challenge first (no-op until Turnstile is configured).
-  if (!(await verifyTurnstile(req.body?.turnstileToken, clientIp(req)))) {
-    return res.status(400).json({ error: 'Verification failed. Please complete the challenge and try again.' });
+  const challenge = await verifyTurnstile(req.body?.turnstileToken);
+  if (!challenge.ok) {
+    // A stale/reused token is the visitor's problem and worth saying out loud;
+    // anything else is a config issue, so stay generic (details are in the logs).
+    const stale = challenge.codes.includes('timeout-or-duplicate');
+    let error = stale
+      ? 'Your verification expired. Please complete the challenge again.'
+      : 'Verification failed. Please complete the challenge and try again.';
+    // Opt-in only: set TURNSTILE_DEBUG=1 in Vercel to surface Cloudflare's codes
+    // on the login screen while diagnosing a setup problem.
+    if (process.env.TURNSTILE_DEBUG === '1' && challenge.codes.length) {
+      error += ` [${challenge.codes.join(', ')}]`;
+    }
+    return res.status(400).json({ error });
   }
   const user = await findUserByEmail(email);
   if (!user || !verifyPassword(password || '', user.salt, user.hash)) {
