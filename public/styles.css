@@ -794,6 +794,9 @@ a { color: inherit; text-decoration: none; }
   /* Keep brand + toggle above the full-screen menu so it can be closed */
   .brand { font-size: 0.8rem; letter-spacing: 0.2em; position: relative; z-index: 50; }
   /* Leave room for the menu toggle rather than letting the mark push into it. */
+  /* The slide caption spreads to the full width, which puts its "Visit" end
+     under the dots once the slideshow is phone-sized. */
+  .slide-label { padding-right: 5.2rem; font-size: 0.95rem; }
   .brand .brand-logo { height: 56px; max-width: 58vw; }
   .site-header.scrolled .brand-logo { height: 48px; max-width: 58vw; }
   /* A size picked for the desktop header would overrun a phone, so it is capped

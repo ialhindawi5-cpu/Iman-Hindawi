@@ -158,12 +158,31 @@
   transform: translateY(-2px);
 }
 
+/* ---------- Phone ----------
+   Measured from the reference at 390×844: panels stacked one per row at
+   351 × 507 with a 5px gutter and ~20px side margins, and a wordmark that
+   grows to span roughly four fifths of the screen. */
 @media (max-width: 900px) {
-  .landing-cards { grid-template-columns: 1fr; }
-  /* One per row: a portrait crop suits a single wide panel better than the
-     near-square the three-across layout uses. */
-  .landing-card { aspect-ratio: 4 / 3; }
-  .landing-card-label { font-size: 1.05rem; bottom: 9%; }
+  .landing {
+    padding: 9vw 5vw 7vw;
+    gap: 7vw;
+  }
+  .landing-brand {
+    font-size: clamp(1.15rem, 5.9vw, 2rem);
+    letter-spacing: 0.3em;
+    text-indent: 0.3em;
+  }
+  .landing-brand .landing-brand-logo { height: clamp(52px, 16vw, 96px); }
+  .landing-cards {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+  /* One per row, so each panel is a portrait rather than the near-square the
+     three-across layout uses. */
+  .landing-card { aspect-ratio: 351 / 507; }
+  .landing-card-label { font-size: 0.94rem; bottom: 12%; }
+  .landing-social { width: 35px; height: 35px; }
+  .landing-social svg { width: 16px; height: 16px; }
   /* Stacked cards have neighbours above and below, so the lift would collide. */
   .landing-card:hover { transform: none; box-shadow: none; }
 }
