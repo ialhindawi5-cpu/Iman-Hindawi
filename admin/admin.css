@@ -281,7 +281,59 @@ input:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(200, 60, 109, 0.12);
 }
 
+select {
+  width: 100%;
+  margin-top: 0.4rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  outline: none;
+  font-family: inherit;
+  font-size: 1rem;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  color: var(--ink);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(200, 60, 109, 0.12);
+}
+
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.2rem; }
+
+/* Logo panel: the font/size row reads as one toolbar the way a word processor
+   puts the family and the size side by side. */
+.font-toolbar { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0 1rem; }
+.brand-preview {
+  margin-top: 1.1rem;
+  display: grid;
+  gap: 0.45rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+.brand-preview-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+}
+.brand-preview-mark {
+  color: var(--ink);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+/* The footer sits on the brand gradient, so its preview does too. */
+.brand-preview-mark.dark {
+  background: linear-gradient(150deg, #7a1c47 0%, #a83b6d 100%);
+  color: #fff5f9;
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+}
 
 /* Section with image */
 .section-grid { display: grid; grid-template-columns: 220px 1fr; gap: 1.6rem; }
@@ -531,6 +583,7 @@ input:focus, textarea:focus {
 
 @media (max-width: 640px) {
   .grid-2 { grid-template-columns: 1fr; }
+  .font-toolbar { grid-template-columns: 1fr; }
   .section-grid { grid-template-columns: 1fr; }
   .media-col { max-width: 240px; }
   .add-user { flex-direction: column; }

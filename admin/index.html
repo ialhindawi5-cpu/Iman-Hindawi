@@ -218,8 +218,32 @@
         <!-- Settings · Logo -->
         <section class="panel" id="panel-logo">
           <h2>Logo</h2>
-          <p class="panel-hint">Upload a logo image to show next to your name in the site header and footer. A small PNG with a transparent background works best. Your name text is edited under <strong>Home → Hero</strong>.</p>
-          <div class="section-grid">
+          <p class="panel-hint">What appears in the site header and footer: your name set as text, or an uploaded logo image. Changes go live when you press <strong>Save changes</strong>.</p>
+
+          <label>Show as
+            <select data-path="brand.mode" id="brandMode">
+              <option value="text">Text (your name)</option>
+              <option value="image">Uploaded logo image</option>
+            </select>
+          </label>
+
+          <div id="brandTextBlock">
+            <label>Logo text<input data-path="brand.text" id="brandText" placeholder="Iman Al Hindawi" /></label>
+            <div class="font-toolbar">
+              <label>Font<select data-path="brand.font" id="brandFont"></select></label>
+              <label>Header size<select data-path="brand.size" id="brandSize"></select></label>
+              <label>Footer size<select data-path="brand.footerSize" id="brandFooterSize"></select></label>
+            </div>
+            <span class="field-note">Leave the text empty to use the name from <strong>Home → Hero</strong>. Sizes shrink automatically on phones so the wordmark never runs off the screen.</span>
+            <div class="brand-preview">
+              <span class="brand-preview-label">Header</span>
+              <span class="brand-preview-mark" id="brandPreviewHeader"></span>
+              <span class="brand-preview-label">Footer</span>
+              <span class="brand-preview-mark dark" id="brandPreviewFooter"></span>
+            </div>
+          </div>
+
+          <div class="section-grid" id="brandImageBlock" hidden>
             <div class="media-col">
               <div class="img-preview logo-preview" data-preview="logo"><span>No logo</span></div>
               <label class="upload-btn">Upload logo
@@ -228,6 +252,7 @@
               <button type="button" class="btn ghost remove-btn" data-remove="logo" hidden>Remove logo</button>
               <small class="upload-status" data-status="logo"></small>
             </div>
+            <p class="panel-hint">A PNG with a transparent background works best, cropped tight to the artwork — empty space inside the file makes the logo look smaller than it is.</p>
           </div>
         </section>
 
@@ -283,6 +308,7 @@
     </div>
   </div>
 
+  <script src="/brand-fonts.js"></script>
   <script src="/admin/admin.js"></script>
 </body>
 </html>

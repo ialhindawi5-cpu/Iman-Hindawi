@@ -192,6 +192,80 @@ function setSectionImage(section, url) {
   if (content.sections && content.sections[section]) content.sections[section].image = url;
 }
 
+/* ---------- logo panel: font pickers & live preview ---------- */
+// The menus are built once, before any content arrives, because populate()
+// assigns a <select>'s value and a value with no matching <option> is dropped.
+function buildBrandPickers() {
+  const fontSel = $('brandFont');
+  if (!fontSel || !window.BRAND_FONTS) return;
+
+  const dflt = document.createElement('option');
+  dflt.value = '';
+  dflt.textContent = 'Site default (Cormorant Garamond)';
+  fontSel.appendChild(dflt);
+  window.BRAND_FONTS.forEach((f) => {
+    const opt = document.createElement('option');
+    opt.value = f.name;
+    opt.textContent = f.name;
+    // Word-processor habit: each entry is set in its own face. Only families
+    // already on the machine render that way until the font is chosen and
+    // fetched, which is a fair preview of what a visitor would see.
+    opt.style.fontFamily = f.stack;
+    fontSel.appendChild(opt);
+  });
+
+  [['brandSize', 'Default'], ['brandFooterSize', 'Default']].forEach(([id, label]) => {
+    const sel = $(id);
+    if (!sel) return;
+    const none = document.createElement('option');
+    none.value = '';
+    none.textContent = label;
+    sel.appendChild(none);
+    (window.BRAND_FONT_SIZES || []).forEach((s) => {
+      const opt = document.createElement('option');
+      opt.value = String(s);
+      opt.textContent = String(s);
+      sel.appendChild(opt);
+    });
+  });
+}
+
+// Mirrors what the website does with the same values, so the panel shows the
+// real result rather than an approximation.
+function refreshBrandPreview() {
+  const mode = $('brandMode');
+  const textBlock = $('brandTextBlock');
+  const imageBlock = $('brandImageBlock');
+  if (!mode) return;
+  const isText = mode.value !== 'image';
+  if (textBlock) textBlock.hidden = !isText;
+  if (imageBlock) imageBlock.hidden = isText;
+
+  const fontName = $('brandFont') ? $('brandFont').value : '';
+  if (window.ensureBrandFont) window.ensureBrandFont(fontName);
+  const stack = window.brandFontStack ? window.brandFontStack(fontName) : '';
+  const hero = (content && content.hero) || {};
+  const fallback = `${hero.firstName || ''} ${hero.lastName || ''}`.trim() || 'Your name';
+  const text = (($('brandText') && $('brandText').value) || '').trim() || fallback;
+  const styled = !!(stack || ($('brandSize') && $('brandSize').value) || ($('brandFooterSize') && $('brandFooterSize').value));
+
+  [['brandPreviewHeader', 'brandSize', 24], ['brandPreviewFooter', 'brandFooterSize', 34]].forEach(([previewId, sizeId, dflt]) => {
+    const el = $(previewId);
+    if (!el) return;
+    const size = window.brandFontSize ? window.brandFontSize($(sizeId) && $(sizeId).value) : 0;
+    el.textContent = styled ? text : text.toUpperCase();
+    el.style.fontFamily = stack || "'Cormorant Garamond', Georgia, serif";
+    el.style.fontSize = `${size || dflt}px`;
+    el.style.letterSpacing = styled ? '0.05em' : '0.28em';
+  });
+}
+
+buildBrandPickers();
+['brandMode', 'brandText', 'brandFont', 'brandSize', 'brandFooterSize'].forEach((id) => {
+  const el = $(id);
+  if (el) el.addEventListener('input', refreshBrandPreview);
+});
+
 /* ---------- content populate & collect ---------- */
 function populate() {
   document.querySelectorAll('[data-path]').forEach((el) => {
@@ -207,6 +281,11 @@ function populate() {
   document.querySelectorAll('[data-preview]').forEach((el) => {
     applyPreview(el, sectionImage(el.dataset.preview));
   });
+  // Sites saved before the logo could be text have no mode stored; text is the
+  // default there, so the picker has to say so rather than sit blank.
+  const mode = $('brandMode');
+  if (mode && mode.value !== 'image') mode.value = 'text';
+  refreshBrandPreview();
   renderProjectsEditor();
 }
 function applyPreview(el, img) {

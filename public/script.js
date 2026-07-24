@@ -77,16 +77,40 @@ function hydrate(c) {
   setText('heroTagline', c.hero.tagline);
   const fullName = `${c.hero.firstName} ${c.hero.lastName}`;
   document.title = fullName;
-  const logo = (c.brand && c.brand.logo) || '';
+  const brandCfg = c.brand || {};
+  const logo = brandCfg.logo || '';
+  // The image is opt-in: an uploaded logo stays on file, but the brand shows as
+  // text unless the admin explicitly picks the image. That way "text" is what a
+  // site with no brand settings at all gets.
+  const useLogo = brandCfg.mode === 'image' && !!logo;
+  // Empty logo text falls back to the hero name, so the header never goes blank.
+  const wordmark = (brandCfg.text || '').trim() || fullName;
+  const fontStack = window.brandFontStack ? window.brandFontStack(brandCfg.font) : '';
+  const headerSize = window.brandFontSize ? window.brandFontSize(brandCfg.size) : 0;
+  const footerSize = window.brandFontSize ? window.brandFontSize(brandCfg.footerSize) : 0;
+  // A chosen face is only downloaded here, at the point of use.
+  if (window.ensureBrandFont) window.ensureBrandFont(brandCfg.font);
 
-  // Header brand: the logo replaces the wordmark entirely when one is set —
-  // the mark already carries the name, so repeating it as text is redundant and
-  // costs the logo room. Without a logo the text wordmark is still the brand.
+  // A styled wordmark is a design in its own right; the spaced uppercase
+  // treatment is only right for the untouched default.
+  const styled = !!(fontStack || headerSize || footerSize);
+  function applyWordmark(el, size) {
+    el.textContent = styled ? wordmark : wordmark.toUpperCase();
+    el.classList.toggle('custom', styled);
+    if (fontStack) el.style.fontFamily = fontStack;
+    // Handed to the stylesheet as a variable so the responsive rules can cap it
+    // on small screens instead of letting a 72px wordmark run off the edge.
+    if (size) el.style.setProperty('--brand-size', size + 'px');
+  }
+
+  // Header brand: the logo replaces the wordmark entirely when it is the chosen
+  // mode — the mark already carries the name, so repeating it as text is
+  // redundant and costs the logo room.
   const brand = document.getElementById('brand');
   if (brand) {
     brand.innerHTML = '';
-    brand.classList.toggle('has-logo', !!logo);
-    if (logo) {
+    brand.classList.toggle('has-logo', useLogo);
+    if (useLogo) {
       const img = document.createElement('img');
       img.className = 'brand-logo';
       img.src = logo;
@@ -96,7 +120,7 @@ function hydrate(c) {
     } else {
       const name = document.createElement('span');
       name.className = 'brand-name';
-      name.textContent = fullName.toUpperCase();
+      applyWordmark(name, headerSize);
       brand.appendChild(name);
     }
   }
@@ -110,15 +134,17 @@ function hydrate(c) {
     const existing = footerBrand.querySelector('.footer-logo');
     if (existing) existing.remove();
     const footerNameEl = document.getElementById('footerName');
-    if (logo) {
+    if (useLogo) {
       const img = document.createElement('img');
       img.className = 'footer-logo';
       img.src = logo;
       img.alt = fullName;
       footerBrand.insertBefore(img, footerBrand.firstChild);
+    } else if (footerNameEl) {
+      applyWordmark(footerNameEl, footerSize);
     }
     // The tagline and the copyright line keep their text either way.
-    if (footerNameEl) footerNameEl.hidden = !!logo;
+    if (footerNameEl) footerNameEl.hidden = useLogo;
   }
 
   // Intro
