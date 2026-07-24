@@ -37,6 +37,13 @@
       "image": ""
     }
   },
+  "landing": {
+    "cards": [
+      { "label": "Project Management", "url": "/#projects", "image": "" },
+      { "label": "Data Analytics", "url": "/#data", "image": "" },
+      { "label": "Web Projects", "url": "/#web", "image": "" }
+    ]
+  },
   "projects": [
     { "url": "https://exam-management-system-kappa.vercel.app/", "title": "Exam System", "image": "assets/uploads/proj-exam.png?v=2" },
     { "url": "https://hibas-bakery.vercel.app/", "title": "Hiba's Bakery", "image": "assets/uploads/proj-bakery.png?v=2" },

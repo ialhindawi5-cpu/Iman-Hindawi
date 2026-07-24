@@ -703,14 +703,36 @@ function looksLikeImage(b) {
 }
 // 'logo' is not a pillar section — it lives at content.brand.logo. These helpers
 // keep the upload/delete routes working for both targets.
-const ALLOWED_SECTIONS = new Set(['actress', 'entrepreneur', 'philanthropist', 'logo']);
+// landing1..landing3 are the picture cards on the alternate landing page.
+const ALLOWED_SECTIONS = new Set(['actress', 'entrepreneur', 'philanthropist', 'logo', 'landing1', 'landing2', 'landing3']);
+
+// Returns the card index for a landing upload target, or -1 for anything else.
+function landingCardIndex(section) {
+  const m = /^landing([123])$/.exec(section || '');
+  return m ? Number(m[1]) - 1 : -1;
+}
 function getSectionImage(content, section) {
   if (section === 'logo') return (content && content.brand && content.brand.logo) || '';
+  const card = landingCardIndex(section);
+  if (card >= 0) {
+    const cards = content && content.landing && content.landing.cards;
+    return (Array.isArray(cards) && cards[card] && cards[card].image) || '';
+  }
   return (content && content.sections && content.sections[section] && content.sections[section].image) || '';
 }
 function setSectionImage(content, section, url) {
   if (!content) return false;
   if (section === 'logo') { content.brand = content.brand || {}; content.brand.logo = url; return true; }
+  const card = landingCardIndex(section);
+  if (card >= 0) {
+    // The landing block is created on demand, so a database saved before the
+    // page existed needs no migration.
+    content.landing = content.landing || {};
+    if (!Array.isArray(content.landing.cards)) content.landing.cards = [];
+    while (content.landing.cards.length <= card) content.landing.cards.push({ label: '', url: '', image: '' });
+    content.landing.cards[card].image = url;
+    return true;
+  }
   if (content.sections && content.sections[section]) { content.sections[section].image = url; return true; }
   return false;
 }
@@ -833,6 +855,8 @@ app.delete('/api/messages/:id', requireAuth, async (req, res) => {
  *  Static sites (used locally; on Vercel these are served by routes)
  * ============================================================ */
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
+// Extensionless URL for the alternate landing page (vercel.json routes it too).
+app.get('/landing', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'landing.html')));
 app.use('/', express.static(path.join(__dirname, 'public')));
 
 // ---------- Error handler (never leak stack traces) ----------

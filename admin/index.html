@@ -70,6 +70,7 @@
         <a href="#panel-entrepreneur">Data</a>
         <a href="#panel-philanthropist">Web</a>
         <a href="#panel-contact">Contact</a>
+        <a href="#panel-landing">Landing page</a>
 
         <span class="side-group">Settings</span>
         <a href="#panel-contactinfo">Contact info</a>
@@ -213,6 +214,70 @@
             <textarea rows="4" data-socials="contact.socials"></textarea>
             <small class="field-note">The <strong>Label</strong> is the text shown next to the icon (e.g. your Instagram handle <em>eman_s.hindawi</em>, or your phone number); the <strong>URL</strong> is where it links. Examples:<br /><code>eman_s.hindawi | https://www.instagram.com/eman_s.hindawi/</code><br /><code>+961 76 934 110 | tel:+96176934110</code></small>
           </label>
+        </section>
+
+        <!-- Alternate landing page -->
+        <section class="panel" id="panel-landing">
+          <h2>Landing page</h2>
+          <p class="panel-hint">A second entry page at <a href="/landing" target="_blank" rel="noopener">/landing</a> — your name over three picture panels. The name and its font come from <strong>Settings → Logo</strong>; the links under the panels come from <strong>Settings → Contact info</strong>.</p>
+
+          <div class="landing-cards-editor">
+            <div class="landing-card-editor">
+              <h3 class="panel-sub">Panel 1</h3>
+              <div class="section-grid">
+                <div class="media-col">
+                  <div class="img-preview" data-preview="landing1"><span>No image</span></div>
+                  <label class="upload-btn">Upload picture
+                    <input type="file" accept="image/*" data-upload="landing1" hidden />
+                  </label>
+                  <button type="button" class="btn ghost remove-btn" data-remove="landing1" hidden>Remove picture</button>
+                  <small class="upload-status" data-status="landing1"></small>
+                </div>
+                <div>
+                  <label>Caption<input data-path="landing.cards.0.label" placeholder="Project Management" /></label>
+                  <label>Links to<input data-path="landing.cards.0.url" placeholder="/#projects" /></label>
+                  <span class="field-note">A link on this site starts with <code>/</code> — for example <code>/#projects</code>. An address elsewhere needs the full <code>https://…</code>.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="landing-card-editor">
+              <h3 class="panel-sub">Panel 2</h3>
+              <div class="section-grid">
+                <div class="media-col">
+                  <div class="img-preview" data-preview="landing2"><span>No image</span></div>
+                  <label class="upload-btn">Upload picture
+                    <input type="file" accept="image/*" data-upload="landing2" hidden />
+                  </label>
+                  <button type="button" class="btn ghost remove-btn" data-remove="landing2" hidden>Remove picture</button>
+                  <small class="upload-status" data-status="landing2"></small>
+                </div>
+                <div>
+                  <label>Caption<input data-path="landing.cards.1.label" placeholder="Data Analytics" /></label>
+                  <label>Links to<input data-path="landing.cards.1.url" placeholder="/#data" /></label>
+                </div>
+              </div>
+            </div>
+
+            <div class="landing-card-editor">
+              <h3 class="panel-sub">Panel 3</h3>
+              <div class="section-grid">
+                <div class="media-col">
+                  <div class="img-preview" data-preview="landing3"><span>No image</span></div>
+                  <label class="upload-btn">Upload picture
+                    <input type="file" accept="image/*" data-upload="landing3" hidden />
+                  </label>
+                  <button type="button" class="btn ghost remove-btn" data-remove="landing3" hidden>Remove picture</button>
+                  <small class="upload-status" data-status="landing3"></small>
+                </div>
+                <div>
+                  <label>Caption<input data-path="landing.cards.2.label" placeholder="Web Projects" /></label>
+                  <label>Links to<input data-path="landing.cards.2.url" placeholder="/#web" /></label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="panel-hint">Pictures go live as soon as they finish uploading. Captions and links go live on <strong>Save changes</strong>.</p>
         </section>
 
         <!-- Settings · Logo -->

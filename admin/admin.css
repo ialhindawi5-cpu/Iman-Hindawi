@@ -304,6 +304,15 @@ select:focus {
 
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1.2rem; }
 
+/* Landing panel: three picture/caption blocks, separated so they don't read as
+   one long form. */
+.landing-card-editor + .landing-card-editor {
+  margin-top: 1.8rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+.landing-card-editor .panel-sub { margin-bottom: 0.9rem; }
+
 /* Logo panel: the font/size row reads as one toolbar the way a word processor
    puts the family and the size side by side. */
 .font-toolbar { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0 1rem; }

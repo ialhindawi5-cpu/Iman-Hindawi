@@ -1,0 +1,152 @@
+/* ---------- Alternate landing page ----------
+   A wordmark over three full-bleed portrait cards, the way a magazine cover
+   splits into panels. Loads after styles.css and only touches its own classes,
+   so nothing here can reach the main site. */
+
+.landing-body {
+  background: #ffffff;
+  color: #111111;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.landing {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(2rem, 4.5vw, 3.4rem) clamp(1rem, 3vw, 2.6rem) clamp(1.6rem, 3vw, 2.4rem);
+  gap: clamp(1.8rem, 3.5vw, 3rem);
+}
+
+/* ---------- Wordmark ---------- */
+.landing-brand {
+  display: block;
+  text-align: center;
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: clamp(1.1rem, 2.5vw, 2rem);
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;   /* offsets the trailing letter gap so it stays centred */
+  text-transform: uppercase;
+  color: #111111;
+  line-height: 1.2;
+}
+.landing-brand .landing-brand-logo {
+  display: block;
+  margin: 0 auto;
+  height: clamp(64px, 8vw, 110px);
+  width: auto;
+  object-fit: contain;
+}
+/* A face or size chosen in the admin replaces the spaced-caps treatment. */
+.landing-brand.custom {
+  font-size: var(--brand-size, clamp(1.3rem, 3vw, 2.4rem));
+  letter-spacing: 0.05em;
+  text-indent: 0;
+  text-transform: none;
+}
+
+/* ---------- Cards ---------- */
+.landing-cards {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(0.6rem, 1.4vw, 1.4rem);
+  align-items: stretch;
+}
+.landing-card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  min-height: clamp(320px, 62vh, 760px);
+  color: #ffffff;
+  background: #f2e3ea;
+  transition: transform 0.55s var(--ease), box-shadow 0.55s var(--ease);
+  will-change: transform;
+}
+.landing-card-media {
+  position: absolute;
+  inset: 0;
+  background-color: #e9d3dd;
+  background-position: center;
+  background-size: cover;
+  transition: transform 0.9s var(--ease), filter 0.55s var(--ease);
+}
+/* Placeholder tint for a card with no picture uploaded yet. */
+.landing-card:not(.has-image) .landing-card-media {
+  background-image: linear-gradient(150deg, #7a1c47 0%, #a83b6d 55%, #d16b95 100%);
+}
+/* Keeps the label readable over a bright photo without dimming the whole image. */
+.landing-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 45%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.5), transparent);
+  pointer-events: none;
+  transition: opacity 0.55s var(--ease);
+}
+.landing-card-label {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1.2rem, 3vw, 2.6rem);
+  transform: translateX(-50%);
+  z-index: 2;
+  width: 100%;
+  padding: 0 1rem;
+  text-align: center;
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: clamp(1rem, 1.5vw, 1.35rem);
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.45);
+}
+
+/* Hover lifts the card clear of its neighbours, as on the reference layout. */
+@media (hover: hover) {
+  .landing-card:hover {
+    transform: scale(1.045);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.28);
+    z-index: 3;
+  }
+  .landing-card:hover .landing-card-media { transform: scale(1.06); }
+}
+.landing-card:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+/* ---------- Social row ---------- */
+.landing-socials {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: clamp(0.7rem, 1.4vw, 1.1rem);
+}
+.landing-social {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid rgba(17, 17, 17, 0.22);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #111111;
+  transition: background 0.3s var(--ease), color 0.3s var(--ease), border-color 0.3s var(--ease), transform 0.3s var(--ease);
+}
+.landing-social svg { width: 19px; height: 19px; display: block; }
+.landing-social:hover {
+  background: #111111;
+  border-color: #111111;
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 900px) {
+  .landing-cards { grid-template-columns: 1fr; }
+  .landing-card { min-height: clamp(280px, 52vh, 420px); }
+  /* Stacked cards have neighbours above and below, so the lift would collide. */
+  .landing-card:hover { transform: none; box-shadow: none; }
+}

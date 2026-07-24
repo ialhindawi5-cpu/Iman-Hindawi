@@ -177,16 +177,39 @@ $('logoutBtn').addEventListener('click', async () => {
   location.reload();
 });
 
-/* ---------- image target helpers (sections + logo) ---------- */
-// The logo lives at content.brand.logo; the pillar images at content.sections[k].image.
+/* ---------- image target helpers (sections + logo + landing) ---------- */
+// The logo lives at content.brand.logo, the landing pictures at
+// content.landing.cards[i].image, the pillar images at content.sections[k].image.
+function landingCardIndex(section) {
+  const m = /^landing([123])$/.exec(section || '');
+  return m ? Number(m[1]) - 1 : -1;
+}
+// The landing block may be missing entirely on a site saved before the page
+// existed, and [data-path] writes need real arrays to index into.
+function ensureLanding() {
+  content.landing = content.landing || {};
+  if (!Array.isArray(content.landing.cards)) content.landing.cards = [];
+  while (content.landing.cards.length < 3) content.landing.cards.push({ label: '', url: '', image: '' });
+}
 function sectionImage(section) {
   if (section === 'logo') return content.brand && content.brand.logo;
+  const card = landingCardIndex(section);
+  if (card >= 0) {
+    const cards = content.landing && content.landing.cards;
+    return Array.isArray(cards) && cards[card] ? cards[card].image : '';
+  }
   return content.sections && content.sections[section] && content.sections[section].image;
 }
 function setSectionImage(section, url) {
   if (section === 'logo') {
     content.brand = content.brand || {};
     content.brand.logo = url;
+    return;
+  }
+  const card = landingCardIndex(section);
+  if (card >= 0) {
+    ensureLanding();
+    content.landing.cards[card].image = url;
     return;
   }
   if (content.sections && content.sections[section]) content.sections[section].image = url;
@@ -268,6 +291,7 @@ buildBrandPickers();
 
 /* ---------- content populate & collect ---------- */
 function populate() {
+  ensureLanding();
   document.querySelectorAll('[data-path]').forEach((el) => {
     el.value = getPath(content, el.dataset.path) ?? '';
   });
