@@ -424,15 +424,24 @@ app.post('/api/login', rateLimit('login', 8, 10 * 60 * 1000), async (req, res) =
   // Bot challenge first (no-op until Turnstile is configured).
   const challenge = await verifyTurnstile(req.body?.turnstileToken);
   if (!challenge.ok) {
-    // A stale/reused token is the visitor's problem and worth saying out loud;
-    // anything else is a config issue, so stay generic (details are in the logs).
-    const stale = challenge.codes.includes('timeout-or-duplicate');
-    let error = stale
-      ? 'Your verification expired. Please complete the challenge again.'
-      : 'Verification failed. Please complete the challenge and try again.';
-    // Opt-in only: set TURNSTILE_DEBUG=1 in Vercel to surface Cloudflare's codes
-    // on the login screen while diagnosing a setup problem.
-    if (process.env.TURNSTILE_DEBUG !== '0' && challenge.codes.length) { // TEMP: on by default while diagnosing
+    // Three outcomes worth telling apart: a stale token (retry), a server-side
+    // key problem (nobody can ever sign in — say so, or it looks like a bad
+    // password), and everything else.
+    const has = (c) => challenge.codes.includes(c);
+    let error;
+    if (has('timeout-or-duplicate')) {
+      error = 'Your verification expired. Please complete the challenge again.';
+    } else if (has('invalid-input-secret') || has('bad-request')) {
+      // invalid-input-secret on a *real* token means the secret belongs to a
+      // different widget than TURNSTILE_SITE_KEY — the two must come as a pair.
+      error = 'Bot verification is misconfigured on the server: the Turnstile '
+        + 'site key and secret key are not from the same widget.';
+    } else {
+      error = 'Verification failed. Please complete the challenge and try again.';
+    }
+    // Opt-in only: set TURNSTILE_DEBUG=1 in Vercel to append Cloudflare's raw
+    // error-codes to the message while diagnosing a setup problem.
+    if (process.env.TURNSTILE_DEBUG === '1' && challenge.codes.length) {
       error += ` [${challenge.codes.join(', ')}]`;
     }
     return res.status(400).json({ error });
