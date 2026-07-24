@@ -711,6 +711,10 @@ function landingCardIndex(section) {
   const m = /^landing([123])$/.exec(section || '');
   return m ? Number(m[1]) - 1 : -1;
 }
+// The shipped panels, used to fill in any the saved content is missing. Taken
+// from the seed file so there is one definition of what the panels start as.
+const DEFAULT_LANDING_CARDS =
+  (require('./data/content.json').landing || {}).cards || [];
 function getSectionImage(content, section) {
   if (section === 'logo') return (content && content.brand && content.brand.logo) || '';
   const card = landingCardIndex(section);
@@ -726,10 +730,14 @@ function setSectionImage(content, section, url) {
   const card = landingCardIndex(section);
   if (card >= 0) {
     // The landing block is created on demand, so a database saved before the
-    // page existed needs no migration.
+    // page existed needs no migration. It is always filled out to the full set
+    // of panels — filling only up to the one being uploaded to would leave the
+    // home page rendering fewer panels than the layout has.
     content.landing = content.landing || {};
     if (!Array.isArray(content.landing.cards)) content.landing.cards = [];
-    while (content.landing.cards.length <= card) content.landing.cards.push({ label: '', url: '', image: '' });
+    DEFAULT_LANDING_CARDS.forEach((dflt, i) => {
+      if (!content.landing.cards[i]) content.landing.cards[i] = { ...dflt };
+    });
     content.landing.cards[card].image = url;
     return true;
   }

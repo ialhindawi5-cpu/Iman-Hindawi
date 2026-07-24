@@ -38,12 +38,28 @@ function renderBrand(c) {
   if (size) el.style.setProperty('--brand-size', size + 'px');
 }
 
+// The layout is three panels. Saved content can hold fewer — uploading a
+// picture to panel 1 before ever pressing Save creates just that one — so the
+// missing ones fall back to these rather than leaving a one-panel page.
+const DEFAULT_CARDS = [
+  { label: 'Project Management', url: '/projects', image: '' },
+  { label: 'Data Analytics', url: '/data', image: '' },
+  { label: 'Web Projects', url: '/web', image: '' },
+];
+
 function renderCards(c) {
   const wrap = document.getElementById('landingCards');
-  const cards = c.landing && Array.isArray(c.landing.cards) ? c.landing.cards.filter(Boolean) : null;
-  // No cards saved yet means the page keeps its built-in three, rather than
-  // rendering an empty grid.
-  if (!wrap || !cards || !cards.length) return;
+  const saved = c.landing && Array.isArray(c.landing.cards) ? c.landing.cards : [];
+  if (!wrap) return;
+
+  const cards = DEFAULT_CARDS.map((dflt, i) => {
+    const card = saved[i] || {};
+    return {
+      label: (card.label || '').trim() || dflt.label,
+      url: (card.url || '').trim() || dflt.url,
+      image: card.image || '',
+    };
+  });
 
   wrap.innerHTML = '';
   cards.forEach((card) => {
@@ -110,5 +126,8 @@ function renderSocials(c) {
     renderSocials(c);
   } catch (_) {
     /* Served without the API: the static markup stays visible. */
+  } finally {
+    // The same pointer the rest of the site uses.
+    if (window.initBrandCursor) window.initBrandCursor();
   }
 })();

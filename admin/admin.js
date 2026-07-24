@@ -185,11 +185,24 @@ function landingCardIndex(section) {
   return m ? Number(m[1]) - 1 : -1;
 }
 // The landing block may be missing entirely on a site saved before the page
-// existed, and [data-path] writes need real arrays to index into.
+// existed, or hold fewer than three cards if a picture was uploaded before the
+// first save. [data-path] writes also need real arrays to index into.
+const DEFAULT_LANDING_CARDS = [
+  { label: 'Project Management', url: '/projects', image: '' },
+  { label: 'Data Analytics', url: '/data', image: '' },
+  { label: 'Web Projects', url: '/web', image: '' },
+];
 function ensureLanding() {
   content.landing = content.landing || {};
   if (!Array.isArray(content.landing.cards)) content.landing.cards = [];
-  while (content.landing.cards.length < 3) content.landing.cards.push({ label: '', url: '', image: '' });
+  DEFAULT_LANDING_CARDS.forEach((dflt, i) => {
+    const card = content.landing.cards[i] || {};
+    content.landing.cards[i] = {
+      label: card.label || dflt.label,
+      url: card.url || dflt.url,
+      image: card.image || '',
+    };
+  });
 }
 function sectionImage(section) {
   if (section === 'logo') return content.brand && content.brand.logo;
