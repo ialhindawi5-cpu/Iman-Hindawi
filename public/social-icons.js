@@ -4,6 +4,13 @@
 //
 // Lives on window so the landing page can draw the same icons without pulling
 // in the whole of script.js.
+
+// The email circle sits alongside the social ones on the home and contact
+// pages; it has no entry in the table below because it comes from the address
+// rather than from the socials list.
+window.MAIL_ICON =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="m3 7 9 6 9-6"/></svg>';
+
 window.SOCIAL_ICONS = [
   {
     name: 'Instagram',

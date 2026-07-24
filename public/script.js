@@ -189,6 +189,32 @@ function hydrate(c) {
     });
   }
 
+  // The same circled icons the home page uses, for a page that carries no
+  // footer. The envelope opens a mail client here, since the address is this
+  // page's whole point.
+  const circles = document.getElementById('socialCircles');
+  if (circles) {
+    circles.innerHTML = '';
+    const circle = (href, svg, label, external) => {
+      const a = document.createElement('a');
+      a.className = 'social-circle';
+      a.href = href;
+      a.title = label;
+      a.setAttribute('aria-label', label);
+      if (external) { a.target = '_blank'; a.rel = 'noopener'; }
+      a.innerHTML = svg; // trusted, constant markup
+      circles.appendChild(a);
+    };
+    (Array.isArray(c.contact.socials) ? c.contact.socials : []).forEach((s) => {
+      if (!s) return;
+      const brand = (window.SOCIAL_ICONS || []).find((b) => b.match.test(`${s.label || ''} ${s.url || ''}`));
+      if (!brand) return;
+      const href = brand.href(s);
+      if (href) circle(href, brand.svg, brand.name, !/^tel:/i.test(href));
+    });
+    if (email && window.MAIL_ICON) circle(`mailto:${email}`, window.MAIL_ICON, 'Email', false);
+  }
+
   // Web Projects slideshow — rebuilt from content when projects are defined.
   renderProjects(c.projects);
 }
