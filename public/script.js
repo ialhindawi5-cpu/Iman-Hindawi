@@ -79,38 +79,46 @@ function hydrate(c) {
   document.title = fullName;
   const logo = (c.brand && c.brand.logo) || '';
 
-  // Header brand: optional logo image beside the wordmark text.
+  // Header brand: the logo replaces the wordmark entirely when one is set —
+  // the mark already carries the name, so repeating it as text is redundant and
+  // costs the logo room. Without a logo the text wordmark is still the brand.
   const brand = document.getElementById('brand');
   if (brand) {
     brand.innerHTML = '';
+    brand.classList.toggle('has-logo', !!logo);
     if (logo) {
       const img = document.createElement('img');
       img.className = 'brand-logo';
       img.src = logo;
-      img.alt = '';
+      // With no visible text this is the link's only accessible name.
+      img.alt = fullName;
       brand.appendChild(img);
+    } else {
+      const name = document.createElement('span');
+      name.className = 'brand-name';
+      name.textContent = fullName.toUpperCase();
+      brand.appendChild(name);
     }
-    const name = document.createElement('span');
-    name.className = 'brand-name';
-    name.textContent = fullName.toUpperCase();
-    brand.appendChild(name);
   }
   setText('footerName', fullName);
   setText('footerNameBottom', fullName);
   setText('footerTag', c.hero.tagline);
 
-  // Footer brand: same logo above the name.
+  // Footer brand: same rule as the header — the logo stands in for the name.
   const footerBrand = document.querySelector('.footer-brand');
   if (footerBrand) {
     const existing = footerBrand.querySelector('.footer-logo');
     if (existing) existing.remove();
+    const footerNameEl = document.getElementById('footerName');
     if (logo) {
       const img = document.createElement('img');
       img.className = 'footer-logo';
       img.src = logo;
-      img.alt = '';
+      img.alt = fullName;
       footerBrand.insertBefore(img, footerBrand.firstChild);
     }
+    // The tagline and the copyright line keep their text either way.
+    if (footerNameEl) footerNameEl.hidden = !!logo;
   }
 
   // Intro

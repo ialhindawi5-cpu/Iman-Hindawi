@@ -56,13 +56,19 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   gap: 0.6rem;
 }
+/* With the wordmark gone the mark is the whole brand, so let it fill the
+   header band rather than sitting as a small chip beside text. */
+.brand.has-logo { gap: 0; }
 .brand .brand-logo {
-  height: 30px;
+  height: clamp(44px, 5.5vw, 68px);
   width: auto;
-  max-width: 150px;
+  max-width: 320px;
   object-fit: contain;
   display: block;
+  transition: height 0.4s var(--ease);
 }
+/* The condensed scrolled header gets a slightly smaller mark. */
+.site-header.scrolled .brand-logo { height: clamp(38px, 4.5vw, 54px); }
 
 .nav { display: flex; gap: clamp(1.2rem, 2.5vw, 2.4rem); }
 .nav a {
@@ -543,11 +549,11 @@ a { color: inherit; text-decoration: none; }
 }
 .footer-brand .footer-logo {
   display: block;
-  height: 46px;
+  height: clamp(96px, 12vw, 148px);
   width: auto;
-  max-width: 190px;
+  max-width: 340px;
   object-fit: contain;
-  margin-bottom: 1rem;
+  margin-bottom: 0.9rem;
 }
 .footer-brand .footer-name {
   font-family: var(--serif);
@@ -713,6 +719,9 @@ a { color: inherit; text-decoration: none; }
   .site-header { padding: 1.05rem clamp(1.1rem, 5vw, 2rem); }
   /* Keep brand + toggle above the full-screen menu so it can be closed */
   .brand { font-size: 0.8rem; letter-spacing: 0.2em; position: relative; z-index: 50; }
+  /* Leave room for the menu toggle rather than letting the mark push into it. */
+  .brand .brand-logo,
+  .site-header.scrolled .brand-logo { height: 42px; max-width: 62vw; }
   .menu-toggle { display: flex; position: relative; z-index: 50; }
 
   /* Full-screen branded menu (brand pink) */
