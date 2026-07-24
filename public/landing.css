@@ -23,9 +23,17 @@
      of the page. Measurements below come from the reference at 1440×900 —
      70px side margins, 30px between the wordmark and the panels. */
   justify-content: center;
+  /* In a window too short for the block, plain centring hides the top of it
+     above the scroll origin; `safe` gives up the centring instead. */
+  justify-content: safe center;
   padding: clamp(1.1rem, 2vw, 2.4rem) clamp(1.2rem, 4.86vw, 6rem);
   gap: clamp(1.2rem, 2.1vw, 2.4rem);
 }
+/* The panels keep their proportions in a short window rather than being
+   squeezed to fit it — the page scrolls instead. */
+.landing-brand,
+.landing-cards,
+.landing-socials { flex-shrink: 0; }
 
 /* ---------- Wordmark ---------- */
 .landing-brand {
@@ -70,11 +78,21 @@
   position: relative;
   display: block;
   overflow: hidden;
-  aspect-ratio: 427 / 499;
   color: #ffffff;
   background: #f2e3ea;
   transition: transform 0.55s var(--ease), box-shadow 0.55s var(--ease);
   will-change: transform;
+}
+/* The panel's height is held open by an in-flow spacer rather than by
+   `aspect-ratio`. Everything else inside the card is absolutely positioned, so
+   a browser that sizes the auto grid row from the in-flow content instead of
+   from the ratio finds nothing there and collapses the panel to a hairline —
+   which is what happened on the phone. A percentage padding always resolves
+   against the card's own width, in every engine. 499 / 427 = 116.86%. */
+.landing-card::before {
+  content: "";
+  display: block;
+  padding-top: 116.86%;
 }
 .landing-card-media {
   position: absolute;
@@ -166,6 +184,10 @@
   .landing {
     padding: 9vw 5vw 7vw;
     gap: 7vw;
+    /* Stacked, the three panels are far taller than the screen, so the block
+       starts at the top and the page scrolls. Centring it would push the
+       wordmark off the top edge where it cannot be scrolled back to. */
+    justify-content: flex-start;
   }
   .landing-brand {
     font-size: clamp(1.15rem, 5.9vw, 2rem);
@@ -178,8 +200,8 @@
     gap: 5px;
   }
   /* One per row, so each panel is a portrait rather than the near-square the
-     three-across layout uses. */
-  .landing-card { aspect-ratio: 351 / 507; }
+     three-across layout uses. 507 / 351 = 144.44%. */
+  .landing-card::before { padding-top: 144.44%; }
   .landing-card-label { font-size: 0.94rem; bottom: 12%; }
   .landing-social { width: 35px; height: 35px; }
   .landing-social svg { width: 16px; height: 16px; }
