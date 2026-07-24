@@ -42,8 +42,10 @@ a { color: inherit; text-decoration: none; }
   background: rgba(253, 239, 244, 0.92);
   backdrop-filter: blur(10px);
   color: var(--ink);
-  padding-top: 1rem;
-  padding-bottom: 1rem;
+  /* The mark is larger now, so the condensed bar trims its own padding to stay
+     a slim strip rather than a tall block over the content. */
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
   border-bottom: 1px solid var(--line);
 }
 
@@ -60,15 +62,15 @@ a { color: inherit; text-decoration: none; }
    header band rather than sitting as a small chip beside text. */
 .brand.has-logo { gap: 0; }
 .brand .brand-logo {
-  height: clamp(44px, 5.5vw, 68px);
+  height: clamp(64px, 7vw, 92px);
   width: auto;
-  max-width: 320px;
+  max-width: 420px;
   object-fit: contain;
   display: block;
   transition: height 0.4s var(--ease);
 }
 /* The condensed scrolled header gets a slightly smaller mark. */
-.site-header.scrolled .brand-logo { height: clamp(38px, 4.5vw, 54px); }
+.site-header.scrolled .brand-logo { height: clamp(52px, 5.5vw, 68px); }
 
 .nav { display: flex; gap: clamp(1.2rem, 2.5vw, 2.4rem); }
 .nav a {
@@ -549,9 +551,9 @@ a { color: inherit; text-decoration: none; }
 }
 .footer-brand .footer-logo {
   display: block;
-  height: clamp(96px, 12vw, 148px);
+  height: clamp(120px, 14vw, 180px);
   width: auto;
-  max-width: 340px;
+  max-width: 400px;
   object-fit: contain;
   margin-bottom: 0.9rem;
 }
@@ -720,8 +722,8 @@ a { color: inherit; text-decoration: none; }
   /* Keep brand + toggle above the full-screen menu so it can be closed */
   .brand { font-size: 0.8rem; letter-spacing: 0.2em; position: relative; z-index: 50; }
   /* Leave room for the menu toggle rather than letting the mark push into it. */
-  .brand .brand-logo,
-  .site-header.scrolled .brand-logo { height: 42px; max-width: 62vw; }
+  .brand .brand-logo { height: 56px; max-width: 58vw; }
+  .site-header.scrolled .brand-logo { height: 48px; max-width: 58vw; }
   .menu-toggle { display: flex; position: relative; z-index: 50; }
 
   /* Full-screen branded menu (brand pink) */
