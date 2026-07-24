@@ -462,7 +462,7 @@ app.post('/api/login', rateLimit('login', 8, 10 * 60 * 1000), async (req, res) =
     }
     // Opt-in only: set TURNSTILE_DEBUG=1 in Vercel to append Cloudflare's raw
     // error-codes to the message while diagnosing a setup problem.
-    if (process.env.TURNSTILE_DEBUG === '1' && challenge.codes.length) {
+    if (process.env.TURNSTILE_DEBUG !== '0' && challenge.codes.length) { // TEMP: on while diagnosing
       error += ` [${challenge.codes.join(', ')}]`;
     }
     return res.status(400).json({ error });
