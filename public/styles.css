@@ -153,15 +153,23 @@ a { color: inherit; text-decoration: none; }
 }
 .eyebrow.light { color: var(--ink-soft); opacity: 1; }
 
+/* Wide-tracked light uppercase sans: the name reads as a wordmark rather than
+   as a headline, which is the treatment the site was modelled on. */
 .hero-title {
-  font-family: var(--serif);
-  font-weight: 400;
-  font-size: clamp(4rem, 15vw, 11rem);
-  line-height: 0.92;
-  letter-spacing: 0.01em;
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: clamp(1.9rem, 5.6vw, 4.4rem);
+  line-height: 1.25;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  /* Tracking leaves a trailing gap after the last letter, which pushes centred
+     text off to the left; an equal indent puts it back. */
+  text-indent: 0.3em;
 }
 .hero-title .line {
-  display: block;
+  /* Both halves sit on one line at this size and wrap on their own when the
+     viewport is too narrow — each keeps its own clip-reveal either way. */
+  display: inline-block;
   overflow: hidden;      /* mask so each line rises out of a clip */
   padding-bottom: 0.04em;
 }
@@ -800,7 +808,11 @@ a { color: inherit; text-decoration: none; }
 
   /* Layout & typography polish */
   .hero-inner { padding: 5rem 1.2rem; }
-  .hero-title { font-size: clamp(3.4rem, 17vw, 5.5rem); }
+  /* Uppercase at 0.3em tracking is far wider than the old serif: on a phone the
+     two halves go back to stacking, which keeps the tracking generous instead of
+     shrinking the name to fit one line. */
+  .hero-title { font-size: clamp(1.5rem, 7.8vw, 3rem); letter-spacing: 0.26em; text-indent: 0.26em; }
+  .hero-title .line { display: block; }
   .hero-sub { letter-spacing: 0.16em; font-size: 0.72rem; }
   .intro p { font-size: clamp(1.35rem, 6vw, 1.9rem); }
 
