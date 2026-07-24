@@ -153,6 +153,16 @@ a { color: inherit; text-decoration: none; }
   text-transform: uppercase;
   font-weight: 400;
 }
+/* One of these links is a button — it opens the projects rather than going
+   anywhere — so it has to shed the styling a button comes with. */
+button.section-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+}
 .section-link::before {
   content: "";
   width: 2rem;
@@ -190,12 +200,7 @@ a { color: inherit; text-decoration: none; }
   transform: translateY(-2px);
 }
 
-/* The live sites on the Web page, below its picture. */
-.web-live {
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: clamp(3.5rem, 8vw, 6rem) clamp(1.5rem, 5vw, 4rem) clamp(4rem, 9vw, 7rem);
-}
+/* Heading of the live-projects overlay on the Web page. */
 .web-live-title {
   font-family: var(--sans);
   font-size: 0.72rem;
@@ -208,9 +213,6 @@ a { color: inherit; text-decoration: none; }
 
 /* Clears the fixed header. */
 .page { padding-top: clamp(88px, 11vh, 128px); }
-/* The Web page's live-projects block follows a full-height picture, so it needs
-   no clearance of its own. */
-.web-live.page { padding-top: clamp(3.5rem, 8vw, 6rem); }
 .page .pillar { padding-top: clamp(2rem, 4vw, 3.5rem); }
 /* On the one-page layout the intro had a whole screen to itself; on a page it
    is an opening line, so it stops pushing what follows below the fold. */
@@ -477,36 +479,103 @@ a { color: inherit; text-decoration: none; }
     linear-gradient(45deg, #e19bb8, #f8d5e2);
 }
 
-/* Web Projects — one button per live site, laid out in a grid. The columns are
-   sized rather than counted, so three sit in a row on a laptop and the same
-   buttons fall to one column on a phone without a breakpoint of their own. */
-.web-live-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  gap: clamp(0.8rem, 1.5vw, 1.2rem);
+/* ---------- Live projects overlay (Web page) ----------
+   The projects are not on the page: the button in the hero opens them over it,
+   so the Web page stays a single screen like the other two. */
+.projects-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;                 /* over the fixed header, which sits at 50 */
+  background: var(--paper);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
-.project-button {
+/* The `hidden` attribute is the only thing that decides whether the overlay is
+   there — nothing is faded in from zero, so it cannot be left invisible by a
+   transition that never runs. */
+.projects-overlay[hidden] { display: none; }
+.projects-overlay-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 3.5rem) clamp(1.5rem, 5vw, 4rem) clamp(3rem, 7vw, 5rem);
+  /* The arrival is a keyframe on the contents, which always finishes at its
+     own end state whatever happens to the class on the parent. */
+  animation: projects-in 0.4s var(--ease) both;
+}
+@keyframes projects-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+.projects-overlay-head {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.55rem;
-  /* The name and the action stack, so a long project title never has to share
-     a line with the label. */
-  padding: 1.35rem 1.5rem;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+.projects-overlay-close {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.7rem;
+  line-height: 1;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: none;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.3s var(--ease), color 0.3s var(--ease),
+    border-color 0.3s var(--ease), transform 0.3s var(--ease);
+}
+.projects-overlay-close:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* The columns are sized rather than counted, so three sit in a row on a laptop
+   and the same cards fall to one column on a phone with no breakpoint. */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+  gap: clamp(1rem, 2vw, 1.6rem);
+}
+.project-card {
+  display: block;
   border: 1px solid var(--line);
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.55);
   color: var(--ink);
-  transition: background 0.4s var(--ease), border-color 0.4s var(--ease),
-    color 0.4s var(--ease), transform 0.4s var(--ease);
+  transition: border-color 0.4s var(--ease), box-shadow 0.4s var(--ease),
+    transform 0.4s var(--ease);
 }
-.project-button-name {
+/* The screenshot has nothing in it to give it height, so the ratio is held open
+   by the padding rather than by `aspect-ratio` — same reason as the panels on
+   the home page. 900 / 1440 = 62.5%. */
+.project-card-shot {
+  display: block;
+  padding-top: 62.5%;
+  background-color: #f3dbe5;
+  background-size: cover;
+  background-position: center top;
+  border-bottom: 1px solid var(--line);
+}
+.project-card-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.1rem 1.3rem 1.25rem;
+}
+.project-card-name {
   font-size: 1.05rem;
   font-weight: 500;
-  letter-spacing: 0.01em;
   line-height: 1.3;
 }
-.project-button-go {
+.project-card-go {
   font-size: 0.68rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -514,17 +583,20 @@ a { color: inherit; text-decoration: none; }
   color: var(--ink-soft);
   transition: color 0.4s var(--ease);
 }
-.project-button:hover {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: #ffffff;
-  transform: translateY(-2px);
+.project-card:hover {
+  border-color: rgba(94, 18, 51, 0.4);
+  box-shadow: 0 24px 50px -30px rgba(94, 18, 51, 0.5);
+  transform: translateY(-3px);
 }
-.project-button:hover .project-button-go { color: rgba(255, 255, 255, 0.82); }
-.project-button:focus-visible {
+.project-card:hover .project-card-go { color: var(--ink); }
+.project-card:focus-visible,
+.projects-overlay-close:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 3px;
 }
+
+/* The page behind the overlay must not scroll with it. */
+body.overlay-open { overflow: hidden; }
 
 .pillar-index {
   font-size: 0.72rem;
@@ -1002,6 +1074,7 @@ a { color: inherit; text-decoration: none; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .reveal { opacity: 1; transform: none; filter: none; transition: none; }
+  .projects-overlay-inner { animation: none; }
   .scroll-cue span { animation: none; }
   .hero-anim { opacity: 1; transform: none; animation: none; }
   .pillar-copy .pillar-index,

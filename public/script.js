@@ -219,35 +219,42 @@ function hydrate(c) {
   renderProjects(c.projects);
 }
 
-// Replace the hardcoded project buttons with the admin-managed list. If there
-// are no valid projects the static fallback markup in web.html is left as it is.
-// A project needs nothing but its link: the screenshot the dashboard captures is
-// no longer shown on the page, it is only what gives the button its title.
+// Replace the overlay's hardcoded cards with the admin-managed project list.
+// If there are no valid projects the static markup in web.html is left as it is.
 function renderProjects(projects) {
   const grid = document.getElementById('webProjects');
   if (!grid || !Array.isArray(projects)) return;
-  const valid = projects.filter((p) => p && p.url);
+  const valid = projects.filter((p) => p && p.url && p.image);
   if (!valid.length) return;
 
   grid.innerHTML = '';
   valid.forEach((p) => {
-    const button = document.createElement('a');
-    button.className = 'project-button';
-    button.href = p.url;
-    button.target = '_blank';
-    button.rel = 'noopener';
+    const card = document.createElement('a');
+    card.className = 'project-card';
+    card.href = p.url;
+    card.target = '_blank';
+    card.rel = 'noopener';
+
+    const shot = document.createElement('span');
+    shot.className = 'project-card-shot';
+    shot.style.backgroundImage = `url("${p.image}")`;
+    card.appendChild(shot);
+
+    const foot = document.createElement('span');
+    foot.className = 'project-card-foot';
 
     const name = document.createElement('span');
-    name.className = 'project-button-name';
+    name.className = 'project-card-name';
     name.textContent = p.title || 'Project';
-    button.appendChild(name);
+    foot.appendChild(name);
 
     const go = document.createElement('span');
-    go.className = 'project-button-go';
+    go.className = 'project-card-go';
     go.textContent = 'View live project ↗';
-    button.appendChild(go);
+    foot.appendChild(go);
 
-    grid.appendChild(button);
+    card.appendChild(foot);
+    grid.appendChild(card);
   });
 }
 
@@ -364,6 +371,36 @@ function initUI() {
         submit.disabled = false;
         submit.textContent = 'Send message';
       }
+    });
+  }
+
+  // Live projects overlay — the Web page's button opens the projects over the
+  // picture. The `hidden` attribute is the whole of it: no class to fall out of
+  // step with, and the page behind is frozen while it is open.
+  const overlay = document.getElementById('projectsOverlay');
+  const openProjects = document.getElementById('liveProjectsBtn');
+  if (overlay && openProjects) {
+    const closeBtn = document.getElementById('projectsOverlayClose');
+
+    const open = () => {
+      overlay.hidden = false;
+      document.body.classList.add('overlay-open');
+      openProjects.setAttribute('aria-expanded', 'true');
+      if (closeBtn) closeBtn.focus();
+    };
+    const close = () => {
+      overlay.hidden = true;
+      document.body.classList.remove('overlay-open');
+      openProjects.setAttribute('aria-expanded', 'false');
+      openProjects.focus();
+    };
+
+    openProjects.addEventListener('click', open);
+    if (closeBtn) closeBtn.addEventListener('click', close);
+    // The margins around the grid close it, the grid itself does not.
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !overlay.hidden) close();
     });
   }
 
