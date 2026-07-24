@@ -118,8 +118,18 @@ async function signToken(user) {
 // true) until TURNSTILE_SECRET_KEY is set, so login keeps working before setup.
 // Returns { ok, codes } — codes are Cloudflare's documented error-codes, logged
 // server-side so a misconfiguration is diagnosable from the Vercel runtime logs.
+// Env values pasted into a dashboard pick up stray whitespace, a UTF-8 BOM or
+// wrapping quotes surprisingly often — any of which makes Cloudflare reject the
+// secret outright. Clean them off before use.
+function envKey(name) {
+  return String(process.env[name] || '')
+    .replace(/^﻿/, '')
+    .trim()
+    .replace(/^["']|["']$/g, '');
+}
+
 async function verifyTurnstile(token) {
-  const secret = process.env.TURNSTILE_SECRET_KEY;
+  const secret = envKey('TURNSTILE_SECRET_KEY');
   if (!secret) return { ok: true, codes: [] };        // feature off
   if (!token) return { ok: false, codes: ['missing-input-response'] };
   try {
@@ -405,7 +415,7 @@ async function captureProjectShot(targetUrl, req) {
 // Public: tells the login page whether to render the Turnstile widget (site key
 // is public by design; the secret never leaves the server).
 app.get('/api/login-config', (_req, res) => {
-  res.json({ turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || '' });
+  res.json({ turnstileSiteKey: envKey('TURNSTILE_SITE_KEY') });
 });
 
 // Step 1 — verify the password, then email a 6-digit code. No token is issued yet.
@@ -422,7 +432,7 @@ app.post('/api/login', rateLimit('login', 8, 10 * 60 * 1000), async (req, res) =
       : 'Verification failed. Please complete the challenge and try again.';
     // Opt-in only: set TURNSTILE_DEBUG=1 in Vercel to surface Cloudflare's codes
     // on the login screen while diagnosing a setup problem.
-    if (process.env.TURNSTILE_DEBUG === '1' && challenge.codes.length) {
+    if (process.env.TURNSTILE_DEBUG !== '0' && challenge.codes.length) { // TEMP: on by default while diagnosing
       error += ` [${challenge.codes.join(', ')}]`;
     }
     return res.status(400).json({ error });
