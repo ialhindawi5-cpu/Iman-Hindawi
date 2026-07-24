@@ -128,9 +128,21 @@ function envKey(name) {
     .replace(/^["']|["']$/g, '');
 }
 
+// The challenge is only ENFORCED when both halves are present. A secret without
+// a site key means the browser renders no widget, so no token can ever exist and
+// nobody could sign in — enforcing it would be a permanent lockout, not security.
+function turnstileEnabled() {
+  return !!(envKey('TURNSTILE_SITE_KEY') && envKey('TURNSTILE_SECRET_KEY'));
+}
+
+// Cloudflare codes that mean OUR configuration is wrong, not that the visitor
+// failed a challenge. In this state the widget rejects everyone, owner included,
+// so we log loudly and fall back to the pre-Turnstile behaviour (password +
+// emailed 2FA code + rate limiting) rather than bricking the admin login.
+const TURNSTILE_CONFIG_ERRORS = ['invalid-input-secret', 'bad-request'];
+
 async function verifyTurnstile(token) {
-  const secret = envKey('TURNSTILE_SECRET_KEY');
-  if (!secret) return { ok: true, codes: [] };        // feature off
+  if (!turnstileEnabled()) return { ok: true, codes: [] };        // feature off
   if (!token) return { ok: false, codes: ['missing-input-response'] };
   try {
     // NOTE: `remoteip` is deliberately NOT sent. Cloudflare validates it against
@@ -145,8 +157,17 @@ async function verifyTurnstile(token) {
     });
     const data = await r.json().catch(() => ({}));
     const codes = Array.isArray(data['error-codes']) ? data['error-codes'] : [];
-    if (!data.success) console.error('Turnstile rejected token:', codes.join(', ') || 'no error-codes');
-    return { ok: !!data.success, codes };
+    if (data.success) return { ok: true, codes };
+    console.error('Turnstile rejected token:', codes.join(', ') || 'no error-codes');
+    if (codes.some((c) => TURNSTILE_CONFIG_ERRORS.includes(c))) {
+      console.error(
+        'Turnstile is MISCONFIGURED (site key and secret key are from different '
+        + 'widgets) — skipping the challenge so the admin login stays reachable. '
+        + 'Fix both TURNSTILE_* env vars from the same Cloudflare widget.'
+      );
+      return { ok: true, codes, degraded: true };
+    }
+    return { ok: false, codes };
   } catch (err) {
     console.error('Turnstile verify failed:', err.message);
     return { ok: false, codes: ['internal-error'] };
