@@ -144,6 +144,7 @@ const TURNSTILE_CONFIG_ERRORS = ['invalid-input-secret', 'bad-request'];
 async function verifyTurnstile(token) {
   if (!turnstileEnabled()) return { ok: true, codes: [] };        // feature off
   if (!token) return { ok: false, codes: ['missing-input-response'] };
+  const secret = envKey('TURNSTILE_SECRET_KEY');
   try {
     // NOTE: `remoteip` is deliberately NOT sent. Cloudflare validates it against
     // the address that solved the challenge, and behind Vercel's proxy (or when
@@ -169,7 +170,9 @@ async function verifyTurnstile(token) {
     }
     return { ok: false, codes };
   } catch (err) {
-    console.error('Turnstile verify failed:', err.message);
+    // Log the whole error, not just .message — this catch once swallowed a
+    // ReferenceError and made a plain code bug look like a Cloudflare outage.
+    console.error('Turnstile verify threw:', err);
     return { ok: false, codes: ['internal-error'] };
   }
 }
