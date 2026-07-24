@@ -215,51 +215,40 @@ function hydrate(c) {
     if (email && window.MAIL_ICON) circle(`mailto:${email}`, window.MAIL_ICON, 'Email', false);
   }
 
-  // Web Projects slideshow — rebuilt from content when projects are defined.
+  // Web Projects buttons — rebuilt from content when projects are defined.
   renderProjects(c.projects);
 }
 
-// Replace the slideshow's hardcoded slides with the admin-managed project list.
-// Runs before initUI (loadContent().finally(initUI)), so the slideshow wiring
-// picks up these fresh .slide / .dot nodes. If there are no valid projects the
-// static fallback markup in index.html is left untouched.
+// Replace the hardcoded project buttons with the admin-managed list. If there
+// are no valid projects the static fallback markup in web.html is left as it is.
+// A project needs nothing but its link: the screenshot the dashboard captures is
+// no longer shown on the page, it is only what gives the button its title.
 function renderProjects(projects) {
-  const slideshow = document.getElementById('webSlideshow');
-  if (!slideshow || !Array.isArray(projects)) return;
-  const valid = projects.filter((p) => p && p.url && p.image);
+  const grid = document.getElementById('webProjects');
+  if (!grid || !Array.isArray(projects)) return;
+  const valid = projects.filter((p) => p && p.url);
   if (!valid.length) return;
 
-  slideshow.innerHTML = '';
-  const dots = document.createElement('div');
-  dots.className = 'slide-dots';
-  dots.id = 'slideDots';
+  grid.innerHTML = '';
+  valid.forEach((p) => {
+    const button = document.createElement('a');
+    button.className = 'project-button';
+    button.href = p.url;
+    button.target = '_blank';
+    button.rel = 'noopener';
 
-  valid.forEach((p, i) => {
-    const slide = document.createElement('a');
-    slide.className = 'slide' + (i === 0 ? ' active' : '');
-    slide.href = p.url;
-    slide.target = '_blank';
-    slide.rel = 'noopener';
-    slide.style.backgroundImage = `url("${p.image}")`;
+    const name = document.createElement('span');
+    name.className = 'project-button-name';
+    name.textContent = p.title || 'Project';
+    button.appendChild(name);
 
-    const label = document.createElement('span');
-    label.className = 'slide-label';
-    label.textContent = `${p.title || 'Project'} `;
-    const visit = document.createElement('span');
-    visit.textContent = 'Visit ↗';
-    label.appendChild(visit);
-    slide.appendChild(label);
-    slideshow.appendChild(slide);
+    const go = document.createElement('span');
+    go.className = 'project-button-go';
+    go.textContent = 'View live project ↗';
+    button.appendChild(go);
 
-    const dot = document.createElement('button');
-    dot.className = 'dot' + (i === 0 ? ' active' : '');
-    dot.type = 'button';
-    dot.dataset.i = String(i);
-    dot.setAttribute('aria-label', p.title || `Project ${i + 1}`);
-    dots.appendChild(dot);
+    grid.appendChild(button);
   });
-
-  slideshow.appendChild(dots);
 }
 
 async function loadContent() {
@@ -376,34 +365,6 @@ function initUI() {
         submit.textContent = 'Send message';
       }
     });
-  }
-
-  // Web Projects slideshow
-  const slideshow = document.getElementById('webSlideshow');
-  if (slideshow) {
-    const slides = Array.from(slideshow.querySelectorAll('.slide'));
-    const dots = Array.from(slideshow.querySelectorAll('.dot'));
-    let current = 0;
-    let timer = null;
-    const DELAY = 4000;
-
-    const show = (i) => {
-      current = (i + slides.length) % slides.length;
-      slides.forEach((s, idx) => s.classList.toggle('active', idx === current));
-      dots.forEach((d, idx) => d.classList.toggle('active', idx === current));
-    };
-    const next = () => show(current + 1);
-    const start = () => { stop(); timer = setInterval(next, DELAY); };
-    const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
-
-    dots.forEach((d) =>
-      d.addEventListener('click', () => { show(Number(d.dataset.i)); start(); })
-    );
-    // Pause while the visitor is hovering (so links are easy to click)
-    slideshow.addEventListener('mouseenter', stop);
-    slideshow.addEventListener('mouseleave', start);
-
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) start();
   }
 
   // Custom cursor — lives in cursor.js so the home page has the same pointer.

@@ -477,84 +477,53 @@ a { color: inherit; text-decoration: none; }
     linear-gradient(45deg, #e19bb8, #f8d5e2);
 }
 
-/* Web Projects slideshow — sits beside the copy like the other pillars */
-.slideshow {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  aspect-ratio: 16 / 10;      /* landscape — matches the screenshots (1440×900) */
-  border-radius: 2px;
-  overflow: hidden;
-  box-shadow: 0 30px 60px -30px rgba(94, 18, 51, 0.45);
+/* Web Projects — one button per live site, laid out in a grid. The columns are
+   sized rather than counted, so three sit in a row on a laptop and the same
+   buttons fall to one column on a phone without a breakpoint of their own. */
+.web-live-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: clamp(0.8rem, 1.5vw, 1.2rem);
 }
-.slide {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  text-decoration: none;
-  opacity: 0;
-  transform: scale(1.08);
-  transition: opacity 1s var(--ease), transform 1.6s var(--ease);
-  pointer-events: none;
-}
-.slide.active {
-  opacity: 1;
-  transform: scale(1);
-  z-index: 1;
-  pointer-events: auto;
-}
-.slide::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(74, 14, 40, 0.85) 0%, rgba(74, 14, 40, 0.12) 42%, transparent 68%);
-}
-.slide-label {
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  z-index: 1;
+.project-button {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 1rem 1.2rem;
-  color: #fff;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.55rem;
+  /* The name and the action stack, so a long project title never has to share
+     a line with the label. */
+  padding: 1.35rem 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--ink);
+  transition: background 0.4s var(--ease), border-color 0.4s var(--ease),
+    color 0.4s var(--ease), transform 0.4s var(--ease);
+}
+.project-button-name {
   font-size: 1.05rem;
   font-weight: 500;
   letter-spacing: 0.01em;
-  transform: translateY(8px);
-  opacity: 0;
-  transition: transform 0.7s var(--ease) 0.25s, opacity 0.7s var(--ease) 0.25s;
+  line-height: 1.3;
 }
-.slide.active .slide-label { transform: translateY(0); opacity: 1; }
-.slide-label span {
-  font-size: 0.7rem;
-  letter-spacing: 0.16em;
+.project-button-go {
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   font-weight: 300;
-  opacity: 0.9;
+  color: var(--ink-soft);
+  transition: color 0.4s var(--ease);
 }
-.slide-dots {
-  position: absolute;
-  bottom: 1rem;
-  right: 1.2rem;
-  z-index: 3;
-  display: flex;
-  gap: 0.45rem;
+.project-button:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #ffffff;
+  transform: translateY(-2px);
 }
-.slide-dots .dot {
-  width: 8px;
-  height: 8px;
-  padding: 0;
-  border: none;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.45);
-  cursor: pointer;
-  transition: width 0.4s var(--ease), background 0.4s var(--ease);
-}
-.slide-dots .dot.active {
-  width: 22px;
-  background: #fff;
+.project-button:hover .project-button-go { color: rgba(255, 255, 255, 0.82); }
+.project-button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
 }
 
 .pillar-index {
@@ -898,7 +867,7 @@ a { color: inherit; text-decoration: none; }
 /* ---------- Custom cursor (fine-pointer devices only) ---------- */
 @media (pointer: fine) {
   body { cursor: none; }
-  a, button, input, textarea, label, .dot, .slide, .menu-toggle { cursor: none; }
+  a, button, input, textarea, label, .menu-toggle { cursor: none; }
 
   .cursor-dot,
   .cursor-ring {
@@ -944,9 +913,6 @@ a { color: inherit; text-decoration: none; }
   /* Keep brand + toggle above the full-screen menu so it can be closed */
   .brand { font-size: 0.8rem; letter-spacing: 0.2em; position: relative; z-index: 50; }
   /* Leave room for the menu toggle rather than letting the mark push into it. */
-  /* The slide caption spreads to the full width, which puts its "Visit" end
-     under the dots once the slideshow is phone-sized. */
-  .slide-label { padding-right: 5.2rem; font-size: 0.95rem; }
   .brand .brand-logo { height: 56px; max-width: 58vw; }
   .site-header.scrolled .brand-logo { height: 48px; max-width: 58vw; }
   /* A size picked for the desktop header would overrun a phone, so it is capped

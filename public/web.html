@@ -51,29 +51,24 @@
     </section>
 
     <!-- The live sites stay below the picture: they are the point of this
-         section and are managed from the dashboard. -->
+         section and are managed from the dashboard. One button per project,
+         in a grid — the site itself is a click away rather than on show. -->
     <section class="web-live page">
       <h2 class="web-live-title">Live projects</h2>
-      <div class="web-live-frame">
-        <div class="slideshow" id="webSlideshow">
-          <a class="slide active" href="https://exam-management-system-kappa.vercel.app/" target="_blank" rel="noopener"
-             style="background-image:url('assets/uploads/proj-exam.png?v=2')">
-            <span class="slide-label">Exam System <span>Visit ↗</span></span>
-          </a>
-          <a class="slide" href="https://hibas-bakery.vercel.app/" target="_blank" rel="noopener"
-             style="background-image:url('assets/uploads/proj-bakery.png?v=2')">
-            <span class="slide-label">Hiba's Bakery <span>Visit ↗</span></span>
-          </a>
-          <a class="slide" href="https://makeup-by-ikbal.vercel.app/" target="_blank" rel="noopener"
-             style="background-image:url('assets/uploads/proj-makeup.png?v=2')">
-            <span class="slide-label">Makeup by Ikbal <span>Visit ↗</span></span>
-          </a>
-          <div class="slide-dots" id="slideDots">
-            <button class="dot active" type="button" data-i="0" aria-label="Exam System"></button>
-            <button class="dot" type="button" data-i="1" aria-label="Hiba's Bakery"></button>
-            <button class="dot" type="button" data-i="2" aria-label="Makeup by Ikbal"></button>
-          </div>
-        </div>
+      <!-- Static fallback: the real buttons are rebuilt from the admin content. -->
+      <div class="web-live-grid" id="webProjects">
+        <a class="project-button" href="https://exam-management-system-kappa.vercel.app/" target="_blank" rel="noopener">
+          <span class="project-button-name">Exam System</span>
+          <span class="project-button-go">View live project ↗</span>
+        </a>
+        <a class="project-button" href="https://hibas-bakery.vercel.app/" target="_blank" rel="noopener">
+          <span class="project-button-name">Hiba's Bakery</span>
+          <span class="project-button-go">View live project ↗</span>
+        </a>
+        <a class="project-button" href="https://makeup-by-ikbal.vercel.app/" target="_blank" rel="noopener">
+          <span class="project-button-name">Makeup by Ikbal</span>
+          <span class="project-button-go">View live project ↗</span>
+        </a>
       </div>
     </section>
   </main>
