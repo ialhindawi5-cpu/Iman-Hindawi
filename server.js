@@ -864,11 +864,13 @@ app.delete('/api/messages/:id', requireAuth, async (req, res) => {
  * ============================================================ */
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 // Extensionless URLs for the section pages (vercel.json routes them too).
-['projects', 'data', 'web', 'contact', 'portfolio'].forEach((page) => {
+['projects', 'data', 'web', 'contact'].forEach((page) => {
   app.get(`/${page}`, (_req, res) => res.sendFile(path.join(__dirname, 'public', `${page}.html`)));
 });
-// The panel page moved from /landing to the home page; keep the old link alive.
-app.get('/landing', (_req, res) => res.redirect(308, '/'));
+// Retired addresses: the panel page moved from /landing to the home page, and
+// the one-page /portfolio view is gone. Both send visitors to the home page
+// rather than a dead end.
+app.get(['/landing', '/portfolio'], (_req, res) => res.redirect(308, '/'));
 app.use('/', express.static(path.join(__dirname, 'public')));
 
 // ---------- Error handler (never leak stack traces) ----------

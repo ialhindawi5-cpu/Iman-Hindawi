@@ -38,7 +38,7 @@
     { "src": "/data", "dest": "/public/data.html" },
     { "src": "/web", "dest": "/public/web.html" },
     { "src": "/contact", "dest": "/public/contact.html" },
-    { "src": "/portfolio", "dest": "/public/portfolio.html" },
+    { "src": "/portfolio", "status": 308, "headers": { "Location": "/" } },
     { "src": "/landing", "status": 308, "headers": { "Location": "/" } },
     { "src": "/(.*)", "dest": "/public/$1" }
   ]
