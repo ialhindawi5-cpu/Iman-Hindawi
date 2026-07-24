@@ -16,7 +16,9 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body data-section="philanthropist">
-  <header class="site-header static" id="header">
+  <!-- Transparent over the full-bleed picture; the scroll handler gives it a
+       background once the visitor scrolls to the live projects below. -->
+  <header class="site-header" id="header">
     <a href="/" class="brand" id="brand">IMAN&nbsp;AL&nbsp;HINDAWI</a>
     <nav class="nav" id="nav">
       <a href="/">Home</a>
@@ -30,9 +32,29 @@
     </button>
   </header>
 
-  <main class="page">
-    <section class="pillar web-projects" id="web">
-      <div class="pillar-media reveal" data-tag="03">
+  <main>
+    <section class="section-hero" id="web">
+      <div class="section-hero-media" id="philanthropistMedia"></div>
+      <div class="section-hero-inner">
+        <div class="section-hero-copy">
+          <p class="eyebrow" id="philanthropistIndex"></p>
+          <h1 id="philanthropistTitle">Web Projects</h1>
+          <p id="philanthropistBody"></p>
+          <ul class="section-tags" id="philanthropistList"></ul>
+          <div class="section-links">
+            <a href="/contact" class="section-link" id="philanthropistCta"></a>
+            <a href="/projects" class="section-link">Project Management</a>
+            <a href="/data" class="section-link">Data Analytics</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- The live sites stay below the picture: they are the point of this
+         section and are managed from the dashboard. -->
+    <section class="web-live page">
+      <h2 class="web-live-title">Live projects</h2>
+      <div class="web-live-frame">
         <div class="slideshow" id="webSlideshow">
           <a class="slide active" href="https://exam-management-system-kappa.vercel.app/" target="_blank" rel="noopener"
              style="background-image:url('assets/uploads/proj-exam.png?v=2')">
@@ -53,19 +75,7 @@
           </div>
         </div>
       </div>
-      <div class="pillar-copy reveal">
-        <span class="pillar-index" id="philanthropistIndex"></span>
-        <h1 id="philanthropistTitle">Web Projects</h1>
-        <p id="philanthropistBody"></p>
-        <ul class="pillar-list" id="philanthropistList"></ul>
-        <a href="/contact" class="link-underline" id="philanthropistCta"></a>
-      </div>
     </section>
-
-    <nav class="page-next" aria-label="Other sections">
-      <a href="/projects">Project Management</a>
-      <a href="/data">Data Analytics</a>
-    </nav>
   </main>
 
   <footer class="site-footer">

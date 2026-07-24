@@ -16,7 +16,9 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body data-section="entrepreneur">
-  <header class="site-header static" id="header">
+  <!-- Transparent over the full-bleed picture; the scroll handler gives it a
+       background once the visitor scrolls past the image. -->
+  <header class="site-header" id="header">
     <a href="/" class="brand" id="brand">IMAN&nbsp;AL&nbsp;HINDAWI</a>
     <nav class="nav" id="nav">
       <a href="/">Home</a>
@@ -30,24 +32,23 @@
     </button>
   </header>
 
-  <main class="page">
-    <section class="pillar" id="data">
-      <div class="pillar-media reveal" data-tag="02">
-        <div class="media-fill media-entrepreneur" id="entrepreneurMedia"></div>
-      </div>
-      <div class="pillar-copy reveal">
-        <span class="pillar-index" id="entrepreneurIndex"></span>
-        <h1 id="entrepreneurTitle">Data Analytics</h1>
-        <p id="entrepreneurBody"></p>
-        <ul class="pillar-list" id="entrepreneurList"></ul>
-        <a href="/contact" class="link-underline" id="entrepreneurCta"></a>
+  <main>
+    <section class="section-hero" id="data">
+      <div class="section-hero-media" id="entrepreneurMedia"></div>
+      <div class="section-hero-inner">
+        <div class="section-hero-copy">
+          <p class="eyebrow" id="entrepreneurIndex"></p>
+          <h1 id="entrepreneurTitle">Data Analytics</h1>
+          <p id="entrepreneurBody"></p>
+          <ul class="section-tags" id="entrepreneurList"></ul>
+          <div class="section-links">
+            <a href="/contact" class="section-link" id="entrepreneurCta"></a>
+            <a href="/projects" class="section-link">Project Management</a>
+            <a href="/web" class="section-link">Web Projects</a>
+          </div>
+        </div>
       </div>
     </section>
-
-    <nav class="page-next" aria-label="Other sections">
-      <a href="/projects">Project Management</a>
-      <a href="/web">Web Projects</a>
-    </nav>
   </main>
 
   <footer class="site-footer">

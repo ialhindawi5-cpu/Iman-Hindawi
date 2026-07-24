@@ -16,7 +16,9 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body data-section="actress">
-  <header class="site-header static" id="header">
+  <!-- Transparent over the full-bleed picture; the scroll handler gives it a
+       background once the visitor scrolls past the image. -->
+  <header class="site-header" id="header">
     <a href="/" class="brand" id="brand">IMAN&nbsp;AL&nbsp;HINDAWI</a>
     <nav class="nav" id="nav">
       <a href="/">Home</a>
@@ -30,24 +32,25 @@
     </button>
   </header>
 
-  <main class="page">
-    <section class="pillar" id="projects">
-      <div class="pillar-media reveal" data-tag="01">
-        <div class="media-fill media-actress" id="actressMedia"></div>
-      </div>
-      <div class="pillar-copy reveal">
-        <span class="pillar-index" id="actressIndex"></span>
-        <h1 id="actressTitle">Project Management</h1>
-        <p id="actressBody"></p>
-        <ul class="pillar-list" id="actressList"></ul>
-        <a href="/contact" class="link-underline" id="actressCta"></a>
+  <main>
+    <section class="section-hero" id="projects">
+      <div class="section-hero-media" id="actressMedia"></div>
+      <div class="section-hero-inner">
+        <div class="section-hero-copy">
+          <p class="eyebrow" id="actressIndex"></p>
+          <h1 id="actressTitle">Project Management</h1>
+          <!-- The profile paragraph lives here, edited under Name &amp; intro. -->
+          <p class="section-lead" id="introText"></p>
+          <p id="actressBody"></p>
+          <ul class="section-tags" id="actressList"></ul>
+          <div class="section-links">
+            <a href="/contact" class="section-link" id="actressCta"></a>
+            <a href="/data" class="section-link">Data Analytics</a>
+            <a href="/web" class="section-link">Web Projects</a>
+          </div>
+        </div>
       </div>
     </section>
-
-    <nav class="page-next" aria-label="Other sections">
-      <a href="/data">Data Analytics</a>
-      <a href="/web">Web Projects</a>
-    </nav>
   </main>
 
   <footer class="site-footer">
