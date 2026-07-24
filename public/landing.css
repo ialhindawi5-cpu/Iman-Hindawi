@@ -18,8 +18,13 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: clamp(1.6rem, 3vw, 2.6rem) clamp(0.8rem, 1.5vw, 1.7rem) clamp(1.4rem, 2.5vw, 2rem);
-  gap: clamp(1.6rem, 3vw, 2.8rem);
+  /* Sized by its content and centred in the window, rather than stretched to
+     fill it: the panels keep their proportions and the block sits in the middle
+     of the page. Measurements below come from the reference at 1440×900 —
+     70px side margins, 30px between the wordmark and the panels. */
+  justify-content: center;
+  padding: clamp(1.1rem, 2vw, 2.4rem) clamp(1.2rem, 4.86vw, 6rem);
+  gap: clamp(1.2rem, 2.1vw, 2.4rem);
 }
 
 /* ---------- Wordmark ---------- */
@@ -28,7 +33,7 @@
   text-align: center;
   font-family: var(--sans);
   font-weight: 300;
-  font-size: clamp(0.9rem, 1.5vw, 1.4rem);
+  font-size: clamp(0.8rem, 1.22vw, 1.5rem);
   letter-spacing: 0.34em;
   text-indent: 0.34em;  /* offsets the trailing letter gap so it stays centred */
   text-transform: uppercase;
@@ -50,19 +55,22 @@
   text-transform: none;
 }
 
-/* ---------- Cards ---------- */
+/* ---------- Cards ----------
+   The panels are shaped by their own proportions, not stretched to whatever
+   height is left over: on the reference each is 427 × 499 with a 10px gutter,
+   which is what makes three of them read as a set of portraits rather than as
+   tall columns. */
 .landing-cards {
-  flex: 1;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: clamp(0.8rem, 1.5vw, 1.5rem);
+  gap: clamp(0.4rem, 0.69vw, 0.9rem);
   align-items: stretch;
 }
 .landing-card {
   position: relative;
   display: block;
   overflow: hidden;
-  min-height: clamp(320px, 62vh, 760px);
+  aspect-ratio: 427 / 499;
   color: #ffffff;
   background: #f2e3ea;
   transition: transform 0.55s var(--ease), box-shadow 0.55s var(--ease);
@@ -94,7 +102,7 @@
 .landing-card-label {
   position: absolute;
   left: 50%;
-  bottom: 11%;
+  bottom: 13%;
   transform: translateX(-50%);
   z-index: 2;
   width: 100%;
@@ -104,7 +112,7 @@
      is too light and too wide-set for a caption sitting on a photograph. */
   font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
   font-weight: 700;
-  font-size: clamp(1.05rem, 1.5vw, 1.45rem);
+  font-size: clamp(0.85rem, 1.05vw, 1.3rem);
   letter-spacing: 0;
   line-height: 1.25;
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.4);
@@ -129,11 +137,11 @@
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: clamp(0.8rem, 1.6vw, 1.4rem);
+  gap: clamp(0.8rem, 1.74vw, 2rem);
 }
 .landing-social {
-  width: 48px;
-  height: 48px;
+  width: clamp(32px, 2.43vw, 46px);
+  height: clamp(32px, 2.43vw, 46px);
   border-radius: 50%;
   border: 1px solid rgba(17, 17, 17, 0.22);
   display: inline-flex;
@@ -142,7 +150,7 @@
   color: #111111;
   transition: background 0.3s var(--ease), color 0.3s var(--ease), border-color 0.3s var(--ease), transform 0.3s var(--ease);
 }
-.landing-social svg { width: 19px; height: 19px; display: block; }
+.landing-social svg { width: clamp(15px, 1vw, 21px); height: clamp(15px, 1vw, 21px); display: block; }
 .landing-social:hover {
   background: #111111;
   border-color: #111111;
@@ -152,7 +160,10 @@
 
 @media (max-width: 900px) {
   .landing-cards { grid-template-columns: 1fr; }
-  .landing-card { min-height: clamp(280px, 52vh, 420px); }
+  /* One per row: a portrait crop suits a single wide panel better than the
+     near-square the three-across layout uses. */
+  .landing-card { aspect-ratio: 4 / 3; }
+  .landing-card-label { font-size: 1.05rem; bottom: 9%; }
   /* Stacked cards have neighbours above and below, so the lift would collide. */
   .landing-card:hover { transform: none; box-shadow: none; }
 }
