@@ -1,4 +1,4 @@
-﻿// ---------- Hydrate content from the data store ----------
+// ---------- Hydrate content from the data store ----------
 
 // The SOCIAL_ICONS table lives in social-icons.js (shared with the landing
 // page) and is loaded before this file.
@@ -37,7 +37,11 @@ function hydrate(c) {
   setText('heroLast', c.hero.lastName);
   setText('heroTagline', c.hero.tagline);
   const fullName = `${c.hero.firstName} ${c.hero.lastName}`;
-  document.title = fullName;
+  // A section page names itself after its own (admin-edited) heading; the rest
+  // of the site is titled with the name alone.
+  const pageSection = document.body.dataset.section;
+  const pageTitle = pageSection && c.sections && c.sections[pageSection] && c.sections[pageSection].title;
+  document.title = pageTitle ? `${pageTitle} — ${fullName}` : fullName;
   const brandCfg = c.brand || {};
   const logo = brandCfg.logo || '';
   // The image is opt-in: an uploaded logo stays on file, but the brand shows as
@@ -65,7 +69,7 @@ function hydrate(c) {
   }
 
   // Header brand: the logo replaces the wordmark entirely when it is the chosen
-  // mode â€” the mark already carries the name, so repeating it as text is
+  // mode — the mark already carries the name, so repeating it as text is
   // redundant and costs the logo room.
   const brand = document.getElementById('brand');
   if (brand) {
@@ -89,7 +93,7 @@ function hydrate(c) {
   setText('footerNameBottom', fullName);
   setText('footerTag', c.hero.tagline);
 
-  // Footer brand: same rule as the header â€” the logo stands in for the name.
+  // Footer brand: same rule as the header — the logo stands in for the name.
   const footerBrand = document.querySelector('.footer-brand');
   if (footerBrand) {
     const existing = footerBrand.querySelector('.footer-logo');
@@ -124,7 +128,7 @@ function hydrate(c) {
   });
 
   // Quote
-  setText('quoteText', `â€œ${c.quote.text}â€`);
+  setText('quoteText', `“${c.quote.text}”`);
   setText('quoteCite', c.quote.cite);
 
   // Contact
@@ -158,8 +162,8 @@ function hydrate(c) {
         a.appendChild(glyph);
 
         // The label (e.g. "eman_s.hindawi" or the phone number) shows next to the
-        // icon. Hide it only when it's junk â€” a pasted URL or just the bare
-        // platform name â€” so old data degrades to an icon-only link.
+        // icon. Hide it only when it's junk — a pasted URL or just the bare
+        // platform name — so old data degrades to an icon-only link.
         const label = (s.label || '').trim();
         const isJunk =
           !label ||
@@ -185,7 +189,7 @@ function hydrate(c) {
     });
   }
 
-  // Web Projects slideshow â€” rebuilt from content when projects are defined.
+  // Web Projects slideshow — rebuilt from content when projects are defined.
   renderProjects(c.projects);
 }
 
@@ -216,7 +220,7 @@ function renderProjects(projects) {
     label.className = 'slide-label';
     label.textContent = `${p.title || 'Project'} `;
     const visit = document.createElement('span');
-    visit.textContent = 'Visit â†—';
+    visit.textContent = 'Visit ↗';
     label.appendChild(visit);
     slide.appendChild(label);
     slideshow.appendChild(slide);
@@ -242,28 +246,37 @@ async function loadContent() {
 }
 
 // ---------- Interactions & animation ----------
+// This file is shared by every page of the site, and a section page carries
+// only the markup it needs — so each block below checks that its elements are
+// actually present rather than assuming the full one-page layout.
 function initUI() {
-  document.getElementById('year').textContent = new Date().getFullYear();
+  const year = document.getElementById('year');
+  if (year) year.textContent = new Date().getFullYear();
 
-  // Header background on scroll
+  // Header background on scroll. A page with no dark hero behind the header
+  // (.static) keeps the light treatment at every scroll position.
   const header = document.getElementById('header');
-  const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 40);
-  onScroll();
-  window.addEventListener('scroll', onScroll, { passive: true });
+  if (header && !header.classList.contains('static')) {
+    const onScroll = () => header.classList.toggle('scrolled', window.scrollY > 40);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
 
   // Mobile menu
   const toggle = document.getElementById('menuToggle');
   const nav = document.getElementById('nav');
-  const setMenu = (open) => {
-    nav.classList.toggle('open', open);
-    toggle.classList.toggle('open', open);
-    document.body.classList.toggle('menu-open', open);
-    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
-  };
-  toggle.addEventListener('click', () => setMenu(!nav.classList.contains('open')));
-  nav.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setMenu(false)));
-  // Close on Escape
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
+  if (toggle && nav) {
+    const setMenu = (open) => {
+      nav.classList.toggle('open', open);
+      toggle.classList.toggle('open', open);
+      document.body.classList.toggle('menu-open', open);
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    };
+    toggle.addEventListener('click', () => setMenu(!nav.classList.contains('open')));
+    nav.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setMenu(false)));
+    // Close on Escape
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
+  }
 
   // Parallax (skipped for reduced-motion users)
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -317,7 +330,7 @@ function initUI() {
         return;
       }
       submit.disabled = true;
-      submit.textContent = 'Sendingâ€¦';
+      submit.textContent = 'Sending…';
       try {
         const res = await fetch('/api/contact', {
           method: 'POST',
@@ -327,7 +340,7 @@ function initUI() {
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || 'Something went wrong.');
         form.reset();
-        status.textContent = 'Thank you â€” your message has been sent.';
+        status.textContent = 'Thank you — your message has been sent.';
         status.classList.add('ok');
       } catch (err) {
         status.textContent = err.message;

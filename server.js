@@ -855,8 +855,12 @@ app.delete('/api/messages/:id', requireAuth, async (req, res) => {
  *  Static sites (used locally; on Vercel these are served by routes)
  * ============================================================ */
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
-// Extensionless URL for the alternate landing page (vercel.json routes it too).
-app.get('/landing', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'landing.html')));
+// Extensionless URLs for the section pages (vercel.json routes them too).
+['projects', 'data', 'web', 'contact', 'portfolio'].forEach((page) => {
+  app.get(`/${page}`, (_req, res) => res.sendFile(path.join(__dirname, 'public', `${page}.html`)));
+});
+// The panel page moved from /landing to the home page; keep the old link alive.
+app.get('/landing', (_req, res) => res.redirect(308, '/'));
 app.use('/', express.static(path.join(__dirname, 'public')));
 
 // ---------- Error handler (never leak stack traces) ----------

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Projects — Iman Al Hindawi</title>
+  <meta name="description" content="Web projects by Iman Al Hindawi — full-stack sites with database, authentication and email, deployed on Vercel." />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <meta name="theme-color" content="#fdeff4" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body data-section="philanthropist">
+  <header class="site-header static" id="header">
+    <a href="/" class="brand" id="brand">IMAN&nbsp;AL&nbsp;HINDAWI</a>
+    <nav class="nav" id="nav">
+      <a href="/">Home</a>
+      <a href="/projects">Projects</a>
+      <a href="/data">Data</a>
+      <a href="/web" aria-current="page">Web</a>
+      <a href="/contact">Contact</a>
+      <a href="/portfolio">Full profile</a>
+    </nav>
+    <button class="menu-toggle" id="menuToggle" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <main class="page">
+    <section class="pillar web-projects" id="web">
+      <div class="pillar-media reveal" data-tag="03">
+        <div class="slideshow" id="webSlideshow">
+          <a class="slide active" href="https://exam-management-system-kappa.vercel.app/" target="_blank" rel="noopener"
+             style="background-image:url('assets/uploads/proj-exam.png?v=2')">
+            <span class="slide-label">Exam System <span>Visit ↗</span></span>
+          </a>
+          <a class="slide" href="https://hibas-bakery.vercel.app/" target="_blank" rel="noopener"
+             style="background-image:url('assets/uploads/proj-bakery.png?v=2')">
+            <span class="slide-label">Hiba's Bakery <span>Visit ↗</span></span>
+          </a>
+          <a class="slide" href="https://makeup-by-ikbal.vercel.app/" target="_blank" rel="noopener"
+             style="background-image:url('assets/uploads/proj-makeup.png?v=2')">
+            <span class="slide-label">Makeup by Ikbal <span>Visit ↗</span></span>
+          </a>
+          <div class="slide-dots" id="slideDots">
+            <button class="dot active" type="button" data-i="0" aria-label="Exam System"></button>
+            <button class="dot" type="button" data-i="1" aria-label="Hiba's Bakery"></button>
+            <button class="dot" type="button" data-i="2" aria-label="Makeup by Ikbal"></button>
+          </div>
+        </div>
+      </div>
+      <div class="pillar-copy reveal">
+        <span class="pillar-index" id="philanthropistIndex"></span>
+        <h1 id="philanthropistTitle">Web Projects</h1>
+        <p id="philanthropistBody"></p>
+        <ul class="pillar-list" id="philanthropistList"></ul>
+        <a href="/contact" class="link-underline" id="philanthropistCta"></a>
+      </div>
+    </section>
+
+    <nav class="page-next" aria-label="Other sections">
+      <a href="/projects">Project Management</a>
+      <a href="/data">Data Analytics</a>
+    </nav>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <span class="footer-name" id="footerName">Iman Al Hindawi</span>
+        <p class="footer-tag" id="footerTag">Project Manager · Data Analyst · PMP®</p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Explore</h4>
+        <a href="/">Home</a>
+        <a href="/projects">Project Management</a>
+        <a href="/data">Data Analytics</a>
+        <a href="/web">Web Projects</a>
+        <a href="/contact">Contact</a>
+        <a href="/portfolio">Full profile</a>
+      </div>
+
+      <div class="footer-col">
+        <h4>Connect</h4>
+        <a href="#" id="footerEmail" class="footer-email"></a>
+        <div class="socials" id="socialsList"></div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© <span id="year"></span> <span id="footerNameBottom">Iman Al Hindawi</span>. All rights reserved.</span>
+      <a href="/" class="footer-top-link">Home ↑</a>
+    </div>
+  </footer>
+
+  <script src="brand-fonts.js"></script>
+  <script src="social-icons.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

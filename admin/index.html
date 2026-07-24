@@ -65,12 +65,12 @@
         <a href="#panel-messages" class="active">Messages<span class="nav-badge" id="msgBadge" hidden>0</span></a>
 
         <span class="side-group">Pages</span>
-        <a href="#panel-home">Home</a>
+        <a href="#panel-landing">Home page</a>
         <a href="#panel-actress">Projects</a>
         <a href="#panel-entrepreneur">Data</a>
         <a href="#panel-philanthropist">Web</a>
         <a href="#panel-contact">Contact</a>
-        <a href="#panel-landing">Landing page</a>
+        <a href="#panel-home">Name &amp; intro</a>
 
         <span class="side-group">Settings</span>
         <a href="#panel-contactinfo">Contact info</a>
@@ -100,10 +100,10 @@
 
         <!-- Home page (Hero + Intro + Quote) -->
         <section class="panel" id="panel-home">
-          <h2>Home page</h2>
-          <p class="panel-hint">The landing section visitors see first.</p>
+          <h2>Name &amp; intro</h2>
+          <p class="panel-hint">Your name is the wordmark on every page and the title in the browser tab. The intro paragraph and the quote appear on the <a href="/contact" target="_blank" rel="noopener">Contact page</a> and on the <a href="/portfolio" target="_blank" rel="noopener">full profile page</a>.</p>
 
-          <h3 class="panel-sub">Hero</h3>
+          <h3 class="panel-sub">Name</h3>
           <div class="grid-2">
             <label>Eyebrow<input data-path="hero.eyebrow" /></label>
             <label>Tagline<input data-path="hero.tagline" /></label>
@@ -122,6 +122,7 @@
         <!-- Pillar sections -->
         <section class="panel" id="panel-actress" data-section="actress">
           <h2>Projects</h2>
+          <p class="panel-hint">The <a href="/projects" target="_blank" rel="noopener">Project Management page</a>, and the first panel of the full profile page.</p>
           <div class="section-grid">
             <div class="media-col">
               <div class="img-preview" data-preview="actress"><span>No image</span></div>
@@ -143,6 +144,7 @@
 
         <section class="panel" id="panel-entrepreneur" data-section="entrepreneur">
           <h2>Data</h2>
+          <p class="panel-hint">The <a href="/data" target="_blank" rel="noopener">Data Analytics page</a>, and the second panel of the full profile page.</p>
           <div class="section-grid">
             <div class="media-col">
               <div class="img-preview" data-preview="entrepreneur"><span>No image</span></div>
@@ -164,6 +166,7 @@
 
         <section class="panel" id="panel-philanthropist" data-section="philanthropist">
           <h2>Web</h2>
+          <p class="panel-hint">The <a href="/web" target="_blank" rel="noopener">Web Projects page</a>, and the third panel of the full profile page.</p>
           <div class="section-grid">
             <div class="media-col">
               <div class="img-preview" data-preview="philanthropist"><span>No image</span></div>
@@ -218,8 +221,8 @@
 
         <!-- Alternate landing page -->
         <section class="panel" id="panel-landing">
-          <h2>Landing page</h2>
-          <p class="panel-hint">A second entry page at <a href="/landing" target="_blank" rel="noopener">/landing</a> — your name over three picture panels. The name and its font come from <strong>Settings → Logo</strong>; the links under the panels come from <strong>Settings → Contact info</strong>.</p>
+          <h2>Home page</h2>
+          <p class="panel-hint">The page visitors land on at your web address — your name over three picture panels. The name and its font come from <strong>Settings → Logo</strong>; the circles under the panels come from <strong>Settings → Contact info</strong>.</p>
 
           <div class="landing-cards-editor">
             <div class="landing-card-editor">
@@ -235,8 +238,8 @@
                 </div>
                 <div>
                   <label>Caption<input data-path="landing.cards.0.label" placeholder="Project Management" /></label>
-                  <label>Links to<input data-path="landing.cards.0.url" placeholder="/#projects" /></label>
-                  <span class="field-note">A link on this site starts with <code>/</code> — for example <code>/#projects</code>. An address elsewhere needs the full <code>https://…</code>.</span>
+                  <label>Links to<input data-path="landing.cards.0.url" placeholder="/projects" /></label>
+                  <span class="field-note">A link on this site starts with <code>/</code> — for example <code>/projects</code>. An address elsewhere needs the full <code>https://…</code>.</span>
                 </div>
               </div>
             </div>
@@ -254,7 +257,7 @@
                 </div>
                 <div>
                   <label>Caption<input data-path="landing.cards.1.label" placeholder="Data Analytics" /></label>
-                  <label>Links to<input data-path="landing.cards.1.url" placeholder="/#data" /></label>
+                  <label>Links to<input data-path="landing.cards.1.url" placeholder="/data" /></label>
                 </div>
               </div>
             </div>
@@ -272,7 +275,7 @@
                 </div>
                 <div>
                   <label>Caption<input data-path="landing.cards.2.label" placeholder="Web Projects" /></label>
-                  <label>Links to<input data-path="landing.cards.2.url" placeholder="/#web" /></label>
+                  <label>Links to<input data-path="landing.cards.2.url" placeholder="/web" /></label>
                 </div>
               </div>
             </div>
@@ -377,3 +380,4 @@
   <script src="/admin/admin.js"></script>
 </body>
 </html>
+

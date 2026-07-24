@@ -1,4 +1,4 @@
-﻿// Known social platforms get a brand icon instead of a raw text label. Each
+// Known social platforms get a brand icon instead of a raw text label. Each
 // entry derives a clean profile URL from whatever the admin saved -- even a
 // pasted share link with ?igsh=... tracking junk, or a stray "#" url.
 //

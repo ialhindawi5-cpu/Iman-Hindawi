@@ -95,9 +95,9 @@ function renderSocials(c) {
     wrap.appendChild(circleLink(href, brand.svg, brand.name, !/^tel:/i.test(href)));
   });
 
-  if (contact.email) {
-    wrap.appendChild(circleLink(`mailto:${contact.email}`, MAIL_ICON, 'Email', false));
-  }
+  // The envelope goes to the contact page rather than straight to a mail client:
+  // it is the only route to that page from here, and the address is on it.
+  wrap.appendChild(circleLink('/contact', MAIL_ICON, 'Contact', false));
 }
 
 (async function load() {

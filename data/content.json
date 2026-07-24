@@ -39,9 +39,9 @@
   },
   "landing": {
     "cards": [
-      { "label": "Project Management", "url": "/#projects", "image": "" },
-      { "label": "Data Analytics", "url": "/#data", "image": "" },
-      { "label": "Web Projects", "url": "/#web", "image": "" }
+      { "label": "Project Management", "url": "/projects", "image": "" },
+      { "label": "Data Analytics", "url": "/data", "image": "" },
+      { "label": "Web Projects", "url": "/web", "image": "" }
     ]
   },
   "projects": [
