@@ -55,7 +55,10 @@ button, input, textarea { font-family: inherit; font-size: 1rem; color: inherit;
   transition: border-color 0.2s;
 }
 .login-card input:focus { border-color: var(--accent); }
-.login-card button {
+/* :not(.link-btn) — otherwise this outranks `.link-btn` below and the text
+   links ("Forgot password?", "Resend code", "Back") render as full-width
+   pink blocks that collide inside .mfa-links. */
+.login-card button:not(.link-btn) {
   width: 100%;
   padding: 0.85rem;
   border: none;
@@ -91,7 +94,8 @@ button, input, textarea { font-family: inherit; font-size: 1rem; color: inherit;
   font-weight: 600;
   padding-right: 0.5rem;
 }
-.mfa-links { display: flex; justify-content: space-between; align-items: center; margin-top: 0.9rem; }
+.mfa-links { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1.1rem; }
+.mfa-links .link-btn { margin-top: 0; }
 /* Cloudflare Turnstile widget on the login form */
 .turnstile-box { display: flex; justify-content: center; margin: 0.2rem 0 1.1rem; min-height: 65px; }
 
