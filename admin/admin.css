@@ -55,10 +55,15 @@ button, input, textarea { font-family: inherit; font-size: 1rem; color: inherit;
   transition: border-color 0.2s;
 }
 .login-card input:focus { border-color: var(--accent); }
-/* :not(.link-btn) — otherwise this outranks `.link-btn` below and the text
-   links ("Forgot password?", "Resend code", "Back") render as full-width
-   pink blocks that collide inside .mfa-links. */
-.login-card button:not(.link-btn) {
+/* Only the primary action gets the block treatment. Matching every button in
+   the card instead swallowed the other two kinds: the text links
+   ("Forgot password?", "Resend code", "Back") and the injected .pw-toggle eye,
+   which turned into a full-width pink bar over the password input. Scoping by
+   [type="submit"] keeps them out by not matching at all, rather than by
+   out-specifying them — :not() adds its argument's weight, so the obvious
+   `button:not(.link-btn)` climbs to 0-2-1 and starts beating the very rules it
+   is meant to defer to. */
+.login-card button[type="submit"] {
   width: 100%;
   padding: 0.85rem;
   border: none;
