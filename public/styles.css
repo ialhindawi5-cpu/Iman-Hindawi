@@ -76,7 +76,13 @@ a { color: inherit; text-decoration: none; }
   position: absolute;
   inset: 0;
   background-size: cover;
-  background-position: center;
+  /* Anchored near the top, not the centre: a full-screen hero is far wider than
+     it is tall, so `cover` on a portrait photo only ever shows a horizontal band
+     of it. Centred, that band landed on the subject's mouth and cut her face in
+     half. 10% keeps a little headroom above the top of the frame while pushing
+     the crop as high as the picture allows — heads and screens sit at the top of
+     a photograph, so this is the safe end to protect. */
+  background-position: 50% 10%;
   /* Stands in until a picture is uploaded for the section. */
   background-image: linear-gradient(150deg, #7a1c47 0%, #a83b6d 55%, #d16b95 100%);
 }
