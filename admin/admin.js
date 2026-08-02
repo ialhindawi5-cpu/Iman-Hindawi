@@ -302,9 +302,38 @@ buildBrandPickers();
   if (el) el.addEventListener('input', refreshBrandPreview);
 });
 
+/* ---------- panel captions name their sections everywhere ---------- */
+// The three panels on the home page are the three section pages, so the caption
+// given to a panel is what that section is called: in the sidebar here, at the
+// top of its panel, and in the website's menu (public/script.js renderNav reads
+// the same captions). The text written in the markup is the fallback for a
+// caption left empty.
+const captionTargets = Array.from(document.querySelectorAll('[data-caption-card]'));
+captionTargets.forEach((el) => { el.dataset.captionDefault = el.textContent.trim(); });
+
+function applyCaptions() {
+  const cards = (content && content.landing && content.landing.cards) || [];
+  captionTargets.forEach((el) => {
+    const card = cards[Number(el.dataset.captionCard)];
+    const label = card ? (card.label || '').trim() : '';
+    el.textContent = label || el.dataset.captionDefault;
+  });
+}
+
+// Typing a caption renames the section straight away, so the rename is visible
+// where it will land rather than only after Save changes.
+document.querySelectorAll('[data-path^="landing.cards."][data-path$=".label"]').forEach((input) => {
+  input.addEventListener('input', () => {
+    if (!content) return;
+    setPath(content, input.dataset.path, input.value);
+    applyCaptions();
+  });
+});
+
 /* ---------- content populate & collect ---------- */
 function populate() {
   ensureLanding();
+  applyCaptions();
   document.querySelectorAll('[data-path]').forEach((el) => {
     el.value = getPath(content, el.dataset.path) ?? '';
   });

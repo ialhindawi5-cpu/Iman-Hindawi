@@ -215,8 +215,24 @@ function hydrate(c) {
     if (email && window.MAIL_ICON) circle(`mailto:${email}`, window.MAIL_ICON, 'Email', false);
   }
 
+  // Nav labels follow the home page panel captions.
+  renderNav(c);
+
   // Web Projects buttons — rebuilt from content when projects are defined.
   renderProjects(c.projects);
+}
+
+// The three section links in the header are the same three panels as on the
+// home page, so they carry the captions set in the admin's Home page panel.
+// The text already in the markup is the fallback — an empty caption, or a site
+// served without the API, leaves the nav reading as it is written.
+function renderNav(c) {
+  const cards = (c.landing && Array.isArray(c.landing.cards)) ? c.landing.cards : [];
+  document.querySelectorAll('[data-nav-card]').forEach((a) => {
+    const card = cards[Number(a.dataset.navCard)];
+    const label = card && (card.label || '').trim();
+    if (label) a.textContent = label;
+  });
 }
 
 // Replace the overlay's hardcoded cards with the admin-managed project list.
