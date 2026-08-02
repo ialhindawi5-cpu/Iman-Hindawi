@@ -310,8 +310,11 @@ async function loadContent() {
     });
     if (!res.ok) return;
     const isPreview = res.headers.get('x-preview') === '1';
-    hydrate(await res.json());
+    const content = await res.json();
+    hydrate(content);
     if (isPreview) { showPreviewBanner(); keepPreviewOnLinks(); }
+    // Visits are counted on the published site only.
+    else if (window.initAnalytics) window.initAnalytics(content.analytics);
   } catch (_) {
     /* If served statically without the API, the default markup stays visible. */
   }

@@ -580,6 +580,7 @@ const PAGE_LABELS = {
   contact: 'Contact page',
   nameintro: 'Name & intro',
   settings: 'Settings',
+  analytics: 'Analytics',
   all: 'the whole site',
 };
 // Which pages hold work that is saved but not on the website yet.
@@ -653,6 +654,120 @@ document.querySelectorAll('[data-save-page]').forEach((b) =>
 );
 document.querySelectorAll('[data-publish-page]').forEach((b) =>
   b.addEventListener('click', () => publish(b.dataset.publishPage))
+);
+
+/* ---------- analytics ---------- */
+// Read-only: the numbers come from Google through our own API, so nothing
+// here is saved or published. The measurement ID below the figures is the one
+// part of this panel that is content.
+const analyticsBody = $('analyticsBody');
+let analyticsDays = 28;
+let analyticsLoaded = false;
+
+const NUMBER = (n) => Number(n || 0).toLocaleString();
+// GA hands dates back as YYYYMMDD.
+const gaDate = (s) => `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+
+function el(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text != null) node.textContent = text;
+  return node;
+}
+
+function renderAnalyticsSetup() {
+  analyticsBody.innerHTML = '';
+  const box = el('div', 'analytics-setup');
+  box.appendChild(el('p', null, 'Google Analytics is not connected to this dashboard yet. The website can still count visits — that only needs the Measurement ID below — but showing the numbers here needs read access to your Google Analytics property:'));
+  const steps = el('ol', 'analytics-steps');
+  [
+    'In Google Cloud, create a service account and download its JSON key.',
+    'In Google Analytics → Admin → Property access management, add that service account\'s email as a Viewer.',
+    'In Vercel → Settings → Environment Variables, add GA_PROPERTY_ID (the numeric property ID) and GA_SERVICE_ACCOUNT_JSON (the whole JSON key, pasted as one value), then redeploy.',
+  ].forEach((s) => steps.appendChild(el('li', null, s)));
+  box.appendChild(steps);
+  analyticsBody.appendChild(box);
+}
+
+function renderAnalytics(data) {
+  analyticsBody.innerHTML = '';
+
+  const tiles = el('div', 'stat-tiles');
+  [
+    ['Visitors', data.totals.visitors],
+    ['Page views', data.totals.pageViews],
+    ['Sessions', data.totals.sessions],
+  ].forEach(([label, value]) => {
+    const tile = el('div', 'stat-tile');
+    tile.appendChild(el('span', 'stat-value', NUMBER(value)));
+    tile.appendChild(el('span', 'stat-label', label));
+    tiles.appendChild(tile);
+  });
+  analyticsBody.appendChild(tiles);
+
+  // A plain bar per day: enough to see the shape of the traffic without
+  // pulling in a charting library.
+  const daily = data.daily || [];
+  const peak = daily.reduce((m, d) => Math.max(m, d.visitors), 0);
+  if (daily.length) {
+    const chart = el('div', 'stat-chart');
+    daily.forEach((d) => {
+      const bar = el('span', 'stat-bar');
+      bar.style.height = `${peak ? Math.max(2, Math.round((d.visitors / peak) * 100)) : 2}%`;
+      bar.title = `${gaDate(d.date)} — ${NUMBER(d.visitors)} visitors, ${NUMBER(d.pageViews)} page views`;
+      chart.appendChild(bar);
+    });
+    analyticsBody.appendChild(chart);
+    const scale = el('div', 'stat-scale');
+    scale.appendChild(el('span', null, gaDate(daily[0].date)));
+    scale.appendChild(el('span', null, `peak ${NUMBER(peak)} visitors/day`));
+    scale.appendChild(el('span', null, gaDate(daily[daily.length - 1].date)));
+    analyticsBody.appendChild(scale);
+  }
+
+  const pages = data.topPages || [];
+  const head = el('h3', 'panel-sub', 'Most visited pages');
+  analyticsBody.appendChild(head);
+  if (!pages.length) {
+    analyticsBody.appendChild(el('p', 'panel-hint', 'No page views in this period yet.'));
+    return;
+  }
+  const list = el('ul', 'top-pages');
+  const busiest = pages[0].pageViews || 1;
+  pages.forEach((p) => {
+    const li = el('li', 'top-page');
+    li.appendChild(el('span', 'top-page-path', p.path));
+    const meter = el('span', 'top-page-meter');
+    const fill = el('span', 'top-page-fill');
+    fill.style.width = `${Math.max(3, Math.round((p.pageViews / busiest) * 100))}%`;
+    meter.appendChild(fill);
+    li.appendChild(meter);
+    li.appendChild(el('span', 'top-page-count', NUMBER(p.pageViews)));
+    list.appendChild(li);
+  });
+  analyticsBody.appendChild(list);
+}
+
+async function loadAnalytics() {
+  analyticsBody.innerHTML = '<p class="panel-hint">Loading…</p>';
+  try {
+    const data = await api(`/api/analytics?days=${analyticsDays}`, { headers: authHeaders() });
+    analyticsLoaded = true;
+    if (!data.configured) return renderAnalyticsSetup();
+    renderAnalytics(data);
+  } catch (err) {
+    analyticsBody.innerHTML = '';
+    analyticsBody.appendChild(el('p', 'form-error', err.message));
+  }
+}
+
+document.querySelectorAll('#analyticsRange .range-btn').forEach((btn) =>
+  btn.addEventListener('click', () => {
+    analyticsDays = Number(btn.dataset.days);
+    document.querySelectorAll('#analyticsRange .range-btn')
+      .forEach((b) => b.classList.toggle('active', b === btn));
+    loadAnalytics();
+  })
 );
 
 /* ---------- page history ---------- */
@@ -866,6 +981,9 @@ function showPanel(id) {
   const target = panels.some((p) => p.id === wanted) ? wanted : DEFAULT_PANEL;
   panels.forEach((p) => { p.hidden = p.id !== target; });
   navLinks.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === `#${target}`));
+  // Google is only asked for figures when the panel is actually opened, and
+  // never before there is a session to ask with.
+  if (target === 'panel-analytics' && !analyticsLoaded && dash && !dash.hidden) loadAnalytics();
   if (location.hash !== `#${target}`) history.replaceState(null, '', `#${target}`);
   window.scrollTo(0, 0);
 }
@@ -1102,6 +1220,9 @@ async function enterDashboard() {
   await loadMessages();
   loginScreen.hidden = true;
   dash.hidden = false;
+  // The panel may already be the one on screen from the URL hash, and the load
+  // above was skipped while there was no session.
+  if (location.hash === '#panel-analytics') loadAnalytics();
   // Poll for new messages every 30s so the inbox/badge stays current.
   setInterval(() => { if (!dash.hidden) loadMessages(); }, 30000);
 }

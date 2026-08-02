@@ -151,6 +151,8 @@ function keepPreviewOnLinks() {
     renderCards(c);
     renderSocials(c);
     if (isPreview) { showPreviewBanner(); keepPreviewOnLinks(); }
+    // Visits are counted on the published site only.
+    else if (window.initAnalytics) window.initAnalytics(c.analytics);
   } catch (_) {
     /* Served without the API: the static markup stays visible. */
   } finally {

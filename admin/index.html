@@ -64,6 +64,7 @@
 
       <nav class="side-nav" id="sideNav">
         <a href="#panel-messages" class="active">Messages<span class="nav-badge" id="msgBadge" hidden>0</span></a>
+        <a href="#panel-analytics">Analytics</a>
 
         <span class="side-group">Pages</span>
         <a href="#panel-landing">Home page</a>
@@ -95,6 +96,33 @@
           </div>
           <p class="panel-hint">Messages sent through your website contact form.</p>
           <div class="msg-list" id="msgList"></div>
+        </section>
+
+        <!-- Analytics: what Google reports about the website, and the setting
+             that makes the website report to it. -->
+        <section class="panel" id="panel-analytics">
+          <div class="panel-head">
+            <h2>Analytics</h2>
+            <div class="analytics-range" id="analyticsRange" role="group" aria-label="Period">
+              <button type="button" class="range-btn" data-days="7">7 days</button>
+              <button type="button" class="range-btn active" data-days="28">28 days</button>
+              <button type="button" class="range-btn" data-days="90">90 days</button>
+            </div>
+          </div>
+          <p class="panel-hint">Visits to your website, counted by Google Analytics. The dashboard itself is not tracked, and looking at a draft preview is not counted.</p>
+          <div id="analyticsBody"><p class="panel-hint">Loading…</p></div>
+
+          <h3 class="panel-sub">Tracking</h3>
+          <p class="panel-hint">Your GA4 <strong>Measurement ID</strong> — find it in Google Analytics under Admin → Data streams → your website. Leave it empty and the website counts nothing.</p>
+          <label>Measurement ID<input data-path="analytics.measurementId" placeholder="G-XXXXXXXXXX" /></label>
+          <span class="field-note">Counting starts once this is published — it is part of the website, so it goes live the same way everything else does.</span>
+
+          <div class="page-bar" data-page-bar="analytics">
+            <button type="button" class="btn ghost" data-save-page="analytics">Save</button>
+            <button type="button" class="btn primary" data-publish-page="analytics">Publish</button>
+            <button type="button" class="btn ghost small" data-history-page="analytics">History</button>
+            <span class="page-state" data-page-state="analytics"></span>
+          </div>
         </section>
 
         <!-- Name + intro paragraph -->

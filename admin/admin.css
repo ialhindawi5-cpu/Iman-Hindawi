@@ -433,6 +433,73 @@ select:focus {
   .project-actions { justify-content: flex-start; }
 }
 
+/* Analytics */
+.analytics-range { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.range-btn {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.range-btn:hover { background: #fae7ee; color: var(--ink); }
+.range-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.stat-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.7rem;
+  margin-bottom: 1.4rem;
+}
+.stat-tile {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  background: #fdf6f9;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.stat-value { font-size: 1.6rem; font-weight: 600; line-height: 1.15; }
+.stat-label { font-size: 0.78rem; color: var(--ink-soft); letter-spacing: 0.06em; text-transform: uppercase; }
+
+/* One bar per day — the shape of the traffic, no charting library. */
+.stat-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 120px;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+}
+.stat-bar { flex: 1; min-width: 2px; border-radius: 2px 2px 0 0; background: var(--accent); opacity: 0.85; }
+.stat-bar:hover { opacity: 1; }
+.stat-scale {
+  display: flex; justify-content: space-between; gap: 0.5rem;
+  font-size: 0.74rem; color: var(--ink-soft); margin: 0.35rem 0.2rem 0;
+}
+
+.top-pages { list-style: none; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.top-page { display: flex; align-items: center; gap: 0.7rem; font-size: 0.86rem; }
+.top-page-path { flex: 0 0 40%; word-break: break-all; }
+.top-page-meter { flex: 1; height: 8px; border-radius: 999px; background: #fae7ee; overflow: hidden; }
+.top-page-fill { display: block; height: 100%; background: var(--accent); }
+.top-page-count { flex: 0 0 auto; font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+
+.analytics-setup { border: 1px solid var(--line); border-radius: 12px; padding: 1rem 1.1rem; background: #fdf6f9; }
+.analytics-setup p { font-size: 0.86rem; color: var(--ink-soft); }
+.analytics-steps { margin: 0.7rem 0 0 1.1rem; display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.85rem; }
+@media (max-width: 620px) {
+  .top-page-path { flex-basis: 55%; }
+  .stat-chart { height: 90px; }
+}
+
 /* Save / Publish / History, one row per page */
 .page-bar {
   display: flex;

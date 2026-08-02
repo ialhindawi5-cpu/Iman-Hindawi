@@ -25,15 +25,19 @@ app.use(express.json({ limit: '1mb' }));
 // Cloudflare Turnstile (bot challenge) needs its script/frame/connect on the
 // admin login only — the public site stays on the strict policy.
 const CF_TURNSTILE = 'https://challenges.cloudflare.com';
+// Google Analytics runs on the public site only — the dashboard is not tracked,
+// and its policy stays as tight as it was.
+const GA_TAG = 'https://www.googletagmanager.com';
+const GA_COLLECT = 'https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com';
 function buildCSP(admin) {
   return [
     "default-src 'self'",
     "base-uri 'self'",
-    `script-src 'self'${admin ? ' ' + CF_TURNSTILE : ''}`,
+    `script-src 'self'${admin ? ' ' + CF_TURNSTILE : ' ' + GA_TAG}`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: https://*.public.blob.vercel-storage.com",
-    `connect-src 'self'${admin ? ' ' + CF_TURNSTILE : ''}`,
+    `img-src 'self' data: https://*.public.blob.vercel-storage.com${admin ? '' : ' ' + GA_COLLECT}`,
+    `connect-src 'self'${admin ? ' ' + CF_TURNSTILE : ' ' + GA_TAG + ' ' + GA_COLLECT}`,
     "object-src 'none'",
     `frame-src ${admin ? CF_TURNSTILE : "'none'"}`,
     "frame-ancestors 'none'",
@@ -372,6 +376,9 @@ const CONTENT_PAGES = {
   contact: { label: 'Contact page', paths: ['contact.eyebrow', 'contact.heading', 'contact.sub'] },
   nameintro: { label: 'Name & intro', paths: ['hero', 'intro', 'quote'] },
   settings: { label: 'Settings', paths: ['contact.email', 'contact.socials', 'brand'] },
+  // The measurement ID is content like anything else: it is saved, then
+  // published, and the website only starts reporting once it is live.
+  analytics: { label: 'Analytics', paths: ['analytics'] },
 };
 const ALL_PAGES = 'all';
 
@@ -999,6 +1006,142 @@ app.delete('/api/upload/:section', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Remove failed:', err.message);
     res.status(500).json({ error: 'Remove failed. Please try again.' });
+  }
+});
+
+/* ============================================================
+ *  Google Analytics (GA4 Data API)
+ * ============================================================ */
+// Read-only reporting for the dashboard's Analytics panel. Google is called
+// directly over HTTPS with a service-account JWT — no client library, because
+// this project deliberately keeps its dependency list short.
+const GA_PROPERTY_ID = String(process.env.GA_PROPERTY_ID || '').replace(/^properties\//, '').trim();
+const GA_SCOPE = 'https://www.googleapis.com/auth/analytics.readonly';
+
+// Either the whole service-account JSON in one variable, or the two fields
+// from it. A key pasted into a dashboard usually arrives with literal \n.
+function gaCredentials() {
+  const raw = process.env.GA_SERVICE_ACCOUNT_JSON;
+  if (raw) {
+    try {
+      const j = JSON.parse(raw);
+      if (j.client_email && j.private_key) {
+        return { email: j.client_email, key: String(j.private_key).replace(/\\n/g, '\n') };
+      }
+    } catch { /* fall through to the split form */ }
+  }
+  if (process.env.GA_CLIENT_EMAIL && process.env.GA_PRIVATE_KEY) {
+    return {
+      email: process.env.GA_CLIENT_EMAIL,
+      key: String(process.env.GA_PRIVATE_KEY).replace(/\\n/g, '\n'),
+    };
+  }
+  return null;
+}
+const gaConfigured = () => !!(GA_PROPERTY_ID && gaCredentials());
+
+const b64url = (s) => Buffer.from(s).toString('base64url');
+let gaToken = { value: '', expires: 0 };
+
+async function gaAccessToken() {
+  if (gaToken.value && Date.now() < gaToken.expires) return gaToken.value;
+  const creds = gaCredentials();
+  if (!creds) throw new Error('Google Analytics is not configured');
+  const now = Math.floor(Date.now() / 1000);
+  const header = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+  const claim = b64url(JSON.stringify({
+    iss: creds.email,
+    scope: GA_SCOPE,
+    aud: 'https://oauth2.googleapis.com/token',
+    exp: now + 3600,
+    iat: now,
+  }));
+  const signer = crypto.createSign('RSA-SHA256');
+  signer.update(`${header}.${claim}`);
+  const assertion = `${header}.${claim}.${signer.sign(creds.key).toString('base64url')}`;
+
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.access_token) {
+    throw new Error(data.error_description || data.error || 'Could not sign in to Google');
+  }
+  // Renewed a minute early so a report never starts with a token about to lapse.
+  gaToken = { value: data.access_token, expires: Date.now() + (data.expires_in - 60) * 1000 };
+  return gaToken.value;
+}
+
+async function gaRunReport(body) {
+  const token = await gaAccessToken();
+  const res = await fetch(
+    `https://analyticsdata.googleapis.com/v1beta/properties/${encodeURIComponent(GA_PROPERTY_ID)}:runReport`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }
+  );
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data.error && data.error.message) || 'Google Analytics rejected the request');
+  return data;
+}
+
+const GA_RANGES = [7, 28, 90];
+const gaNumber = (row, i) => Number((row && row.metricValues && row.metricValues[i] && row.metricValues[i].value) || 0);
+
+app.get('/api/analytics', requireAuth, rateLimit('analytics', 60, 10 * 60 * 1000), async (req, res) => {
+  // Nothing set up yet is a normal state, not an error: the panel explains what
+  // to do rather than showing a failure.
+  if (!gaConfigured()) return res.json({ configured: false });
+  const days = GA_RANGES.includes(Number(req.query.days)) ? Number(req.query.days) : 28;
+  const dateRanges = [{ startDate: `${days}daysAgo`, endDate: 'today' }];
+  try {
+    const [byDay, byPage] = await Promise.all([
+      gaRunReport({
+        dateRanges,
+        dimensions: [{ name: 'date' }],
+        metrics: [{ name: 'activeUsers' }, { name: 'screenPageViews' }, { name: 'sessions' }],
+        orderBys: [{ dimension: { dimensionName: 'date' } }],
+        metricAggregations: ['TOTAL'],
+        limit: 100,
+      }),
+      gaRunReport({
+        dateRanges,
+        dimensions: [{ name: 'pagePath' }],
+        metrics: [{ name: 'screenPageViews' }],
+        orderBys: [{ metric: { metricName: 'screenPageViews' }, desc: true }],
+        limit: 8,
+      }),
+    ]);
+
+    const total = (byDay.totals && byDay.totals[0]) || null;
+    res.json({
+      configured: true,
+      days,
+      totals: {
+        visitors: gaNumber(total, 0),
+        pageViews: gaNumber(total, 1),
+        sessions: gaNumber(total, 2),
+      },
+      daily: (byDay.rows || []).map((r) => ({
+        date: r.dimensionValues[0].value, // YYYYMMDD
+        visitors: gaNumber(r, 0),
+        pageViews: gaNumber(r, 1),
+      })),
+      topPages: (byPage.rows || []).map((r) => ({
+        path: r.dimensionValues[0].value,
+        pageViews: gaNumber(r, 0),
+      })),
+    });
+  } catch (err) {
+    console.error('Analytics failed:', err.message);
+    res.status(502).json({ error: 'Could not read Google Analytics. Check the property ID and that the service account has access.' });
   }
 });
 
