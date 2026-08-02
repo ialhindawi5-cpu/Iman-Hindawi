@@ -321,7 +321,7 @@ function applyCaptions() {
 }
 
 // Typing a caption renames the section straight away, so the rename is visible
-// where it will land rather than only after Save changes.
+// where it will land rather than only after a Save.
 document.querySelectorAll('[data-path^="landing.cards."][data-path$=".label"]').forEach((input) => {
   input.addEventListener('input', () => {
     if (!content) return;
@@ -533,7 +533,7 @@ async function refreshProject(i, btn) {
     content.projects[i].image = data.image;
     if (!content.projects[i].title && data.title) content.projects[i].title = data.title;
     renderProjectsEditor();
-    projStatus('Screenshot updated ✓ — click Save changes to publish.', 'ok');
+    projStatus('Screenshot updated ✓ — Save it, then Publish to put it on the website.', 'ok');
   } catch (err) {
     projStatus(err.message, 'err');
   } finally {
@@ -607,11 +607,11 @@ function setPageMsg(page, text, kind) {
   setTimeout(renderPending, 2600);
 }
 
-async function save(page = 'all') {
-  const saveMsg = $('saveMsg');
-  const global = page === 'all';
-  if (global) { saveMsg.className = ''; saveMsg.textContent = 'Saving…'; }
-  else setPageMsg(page, 'Saving…');
+// Saving is always done from a page's own bar. The whole document still goes
+// up — collect() reads every panel — so edits made on another page are not lost
+// by saving this one; `page` says which one to file it under and to publish.
+async function save(page) {
+  setPageMsg(page, 'Saving…');
   try {
     const res = await api('/api/content', {
       method: 'PUT',
@@ -619,17 +619,9 @@ async function save(page = 'all') {
       body: JSON.stringify({ page, content: collect() }),
     });
     pending = res.pending || pending;
-    if (global) {
-      saveMsg.textContent = 'Saved ✓ — publish a page to put it on the website';
-      saveMsg.classList.add('ok');
-      setTimeout(() => { saveMsg.textContent = ''; saveMsg.className = ''; }, 3500);
-      renderPending();
-    } else {
-      setPageMsg(page, 'Saved ✓ — not on the website yet', 'ok');
-    }
+    setPageMsg(page, 'Saved ✓ — not on the website yet', 'ok');
   } catch (err) {
-    if (global) { saveMsg.textContent = err.message; saveMsg.classList.add('err'); }
-    else setPageMsg(page, err.message, 'err');
+    setPageMsg(page, err.message, 'err');
   }
 }
 
@@ -662,10 +654,6 @@ document.querySelectorAll('[data-save-page]').forEach((b) =>
 document.querySelectorAll('[data-publish-page]').forEach((b) =>
   b.addEventListener('click', () => publish(b.dataset.publishPage))
 );
-
-$('saveBtn').addEventListener('click', () => save('all'));
-$('saveBtn2').addEventListener('click', () => save('all'));
-$('saveBtnMobile').addEventListener('click', () => save('all'));
 
 /* ---------- page history ---------- */
 const historyModal = $('historyModal');
@@ -858,7 +846,7 @@ showSettingsTab(DEFAULT_SETTINGS_TAB);
 
 /* ---------- panel routing — one section on screen at a time ---------- */
 // Hidden panels stay in the DOM, so collect() still gathers every field and
-// Save changes keeps saving the whole site, not just the visible section.
+// a Save keeps sending the whole site, not just the visible section.
 const navLinks = Array.from(document.querySelectorAll('.side-nav a'));
 const panels = Array.from(document.querySelectorAll('.dash-body .panel'));
 const DEFAULT_PANEL = 'panel-messages';
