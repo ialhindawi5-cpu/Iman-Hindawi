@@ -3,3 +3,7 @@ Allow: /
 Disallow: /admin
 Disallow: /admin/
 Disallow: /api/
+# Draft previews belong to the dashboard, not to the public site.
+Disallow: /*?preview=1
+
+Sitemap: https://iman-hindawi.vercel.app/sitemap.xml

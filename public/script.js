@@ -37,11 +37,9 @@ function hydrate(c) {
   setText('heroLast', c.hero.lastName);
   setText('heroTagline', c.hero.tagline);
   const fullName = `${c.hero.firstName} ${c.hero.lastName}`;
-  // A section page names itself after its own (admin-edited) heading; the rest
-  // of the site is titled with the name alone.
-  const pageSection = document.body.dataset.section;
-  const pageTitle = pageSection && c.sections && c.sections[pageSection] && c.sections[pageSection].title;
-  document.title = pageTitle ? `${pageTitle} — ${fullName}` : fullName;
+  // The <title> is left alone deliberately: each page carries one written for
+  // search results, and overwriting it here would hand Google the heading
+  // instead of the words someone would actually type.
   const brandCfg = c.brand || {};
   const logo = brandCfg.logo || '';
   // The image is opt-in: an uploaded logo stays on file, but the brand shows as

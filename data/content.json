@@ -44,6 +44,18 @@
       { "label": "Iman Lifestyle", "url": "/iman-lifestyle", "image": "" }
     ]
   },
+  "seo": {
+    "allowIndexing": false,
+    "searchConsole": "",
+    "image": "",
+    "pages": {
+      "home": { "title": "", "description": "" },
+      "projects": { "title": "", "description": "" },
+      "data": { "title": "", "description": "" },
+      "web": { "title": "", "description": "" },
+      "contact": { "title": "", "description": "" }
+    }
+  },
   "projects": [
     { "url": "https://exam-management-system-kappa.vercel.app/", "title": "Exam System", "image": "assets/uploads/proj-exam.png?v=2" },
     { "url": "https://hibas-bakery.vercel.app/", "title": "Hiba's Bakery", "image": "assets/uploads/proj-bakery.png?v=2" },

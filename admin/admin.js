@@ -351,7 +351,12 @@ function populate() {
   // default there, so the picker has to say so rather than sit blank.
   const mode = $('brandMode');
   if (mode && mode.value !== 'image') mode.value = 'text';
+  // A site with no SEO block saved yet is hidden from search, which is what the
+  // stored value being absent means.
+  const indexing = $('seoIndexing');
+  if (indexing && indexing.value !== 'true') indexing.value = 'false';
   refreshBrandPreview();
+  refreshSeoPreviews();
   renderProjectsEditor();
 }
 function applyPreview(el, img) {
@@ -581,6 +586,7 @@ const PAGE_LABELS = {
   nameintro: 'Name & intro',
   settings: 'Settings',
   analytics: 'Analytics',
+  seo: 'SEO',
   all: 'the whole site',
 };
 // Which pages hold work that is saved but not on the website yet.
@@ -655,6 +661,73 @@ document.querySelectorAll('[data-save-page]').forEach((b) =>
 document.querySelectorAll('[data-publish-page]').forEach((b) =>
   b.addEventListener('click', () => publish(b.dataset.publishPage))
 );
+
+/* ---------- SEO panel ---------- */
+// Everything here is content: the fields are ordinary data-path inputs saved
+// and published with the SEO page. This code only draws what the result will
+// look like while it is being typed.
+const SEO_PATHS = {
+  home: '/',
+  projects: '/projects',
+  data: '/entrepreneur',
+  web: '/iman-lifestyle',
+  contact: '/contact',
+};
+const SITE_HOST = 'iman-hindawi.vercel.app';
+
+function renderSerpPreview(key) {
+  const box = document.querySelector(`[data-serp="${key}"]`);
+  if (!box) return;
+  const title = (document.querySelector(`[data-seo-title="${key}"]`) || {}).value || '';
+  const desc = (document.querySelector(`[data-seo-desc="${key}"]`) || {}).value || '';
+  box.innerHTML = '';
+
+  const url = document.createElement('span');
+  url.className = 'serp-url';
+  url.textContent = `${SITE_HOST}${SEO_PATHS[key] === '/' ? '' : SEO_PATHS[key]}`;
+  box.appendChild(url);
+
+  const head = document.createElement('span');
+  head.className = `serp-title${title.trim() ? '' : ' empty'}`;
+  head.textContent = title.trim() || "The page's own title is used";
+  box.appendChild(head);
+
+  const body = document.createElement('span');
+  body.className = `serp-desc${desc.trim() ? '' : ' empty'}`;
+  body.textContent = desc.trim() || "The page's own description is used";
+  box.appendChild(body);
+
+  // Google cuts both off; saying so while typing is more use than after.
+  const count = document.createElement('span');
+  count.className = 'serp-count';
+  const warn = [];
+  if (title.trim().length > 60) warn.push(`title ${title.trim().length}/60 — likely cut short`);
+  if (desc.trim().length > 155) warn.push(`description ${desc.trim().length}/155 — likely cut short`);
+  count.textContent = warn.join(' · ');
+  count.classList.toggle('over', warn.length > 0);
+  box.appendChild(count);
+}
+
+function renderIndexNote() {
+  const note = $('seoIndexNote');
+  const select = $('seoIndexing');
+  if (!note || !select) return;
+  const visible = select.value === 'true';
+  note.textContent = visible
+    ? 'Google may list the site. The change reaches the website when you press Publish below.'
+    : 'The site stays out of search results: robots.txt asks search engines away and every page is marked "do not index". Sharing a link still shows the picture and wording — that is not search.';
+  note.classList.toggle('warn', visible);
+}
+
+function refreshSeoPreviews() {
+  Object.keys(SEO_PATHS).forEach(renderSerpPreview);
+  renderIndexNote();
+}
+
+document.querySelectorAll('[data-seo-title], [data-seo-desc]').forEach((el) =>
+  el.addEventListener('input', () => renderSerpPreview(el.dataset.seoTitle || el.dataset.seoDesc))
+);
+if ($('seoIndexing')) $('seoIndexing').addEventListener('change', renderIndexNote);
 
 /* ---------- analytics ---------- */
 // Read-only: the numbers come from Google through our own API, so nothing

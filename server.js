@@ -379,6 +379,9 @@ const CONTENT_PAGES = {
   // The measurement ID is content like anything else: it is saved, then
   // published, and the website only starts reporting once it is live.
   analytics: { label: 'Analytics', paths: ['analytics'] },
+  // Search titles and descriptions, the sharing picture and the Search Console
+  // code — all edited in the dashboard, all published like the rest.
+  seo: { label: 'SEO', paths: ['seo'] },
 };
 const ALL_PAGES = 'all';
 
@@ -912,7 +915,8 @@ function looksLikeImage(b) {
 // 'logo' is not a pillar section — it lives at content.brand.logo. These helpers
 // keep the upload/delete routes working for both targets.
 // landing1..landing3 are the picture cards on the alternate landing page.
-const ALLOWED_SECTIONS = new Set(['actress', 'entrepreneur', 'philanthropist', 'logo', 'landing1', 'landing2', 'landing3']);
+// 'ogimage' is the picture shown when a link to the site is shared.
+const ALLOWED_SECTIONS = new Set(['actress', 'entrepreneur', 'philanthropist', 'logo', 'landing1', 'landing2', 'landing3', 'ogimage']);
 
 // Returns the card index for a landing upload target, or -1 for anything else.
 function landingCardIndex(section) {
@@ -925,6 +929,7 @@ const DEFAULT_LANDING_CARDS =
   (require('./data/content.json').landing || {}).cards || [];
 function getSectionImage(content, section) {
   if (section === 'logo') return (content && content.brand && content.brand.logo) || '';
+  if (section === 'ogimage') return (content && content.seo && content.seo.image) || '';
   const card = landingCardIndex(section);
   if (card >= 0) {
     const cards = content && content.landing && content.landing.cards;
@@ -935,6 +940,7 @@ function getSectionImage(content, section) {
 function setSectionImage(content, section, url) {
   if (!content) return false;
   if (section === 'logo') { content.brand = content.brand || {}; content.brand.logo = url; return true; }
+  if (section === 'ogimage') { content.seo = content.seo || {}; content.seo.image = url; return true; }
   const card = landingCardIndex(section);
   if (card >= 0) {
     // The landing block is created on demand, so a database saved before the
@@ -1211,15 +1217,282 @@ app.delete('/api/messages/:id', requireAuth, async (req, res) => {
 });
 
 /* ============================================================
+ *  Server-rendered pages (SEO)
+ * ============================================================ */
+// The pages are built to be filled in by script.js once the API answers. That
+// is fine for a visitor and useless for a crawler: a link preview or a search
+// engine that does not run scripts sees empty paragraphs. So the same published
+// content is written into the HTML here, before it is sent, and the client-side
+// hydrate() then writes the identical values over the top.
+const SITE_URL = (process.env.SITE_URL || 'https://iman-hindawi.vercel.app').replace(/\/$/, '');
+const OG_IMAGE = `${SITE_URL}/og-image.png`;
+
+const PAGES_SEO = [
+  { path: '/', file: 'index.html', section: null },
+  { path: '/projects', file: 'projects.html', section: 'actress' },
+  { path: '/entrepreneur', file: 'entrepreneur.html', section: 'entrepreneur' },
+  { path: '/iman-lifestyle', file: 'iman-lifestyle.html', section: 'philanthropist' },
+  { path: '/contact', file: 'contact.html', section: null },
+];
+
+const pageCache = new Map();
+function pageSource(file) {
+  if (!pageCache.has(file)) {
+    pageCache.set(file, fs.readFileSync(path.join(__dirname, 'public', file), 'utf8'));
+  }
+  return pageCache.get(file);
+}
+
+const esc = (s) => String(s == null ? '' : s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+// Only same-site paths and plain http(s) links are written into an href.
+const safeHref = (u) => {
+  const s = String(u || '').trim();
+  return /^\/(?!\/)/.test(s) || /^https?:\/\//i.test(s) ? s : '';
+};
+// Replaces what is between an element's tags, matched by its id.
+function fillById(html, id, inner) {
+  const re = new RegExp(`(<([a-z0-9]+)[^>]*\\sid="${id}"[^>]*>)[\\s\\S]*?(</\\2>)`, 'i');
+  return html.replace(re, (m, open, tag, close) => `${open}${inner}${close}`);
+}
+function fillAttr(html, id, attr, value) {
+  const re = new RegExp(`(<[a-z0-9]+[^>]*\\sid="${id}")([^>]*>)`, 'i');
+  return html.replace(re, (m, head, tail) => `${head} ${attr}="${value}"${tail}`);
+}
+// Text pulled back out of the page is already escaped; it is decoded here so
+// that writing it into a meta tag escapes it exactly once.
+const unesc = (s) => String(s || '')
+  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+  .replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+const readTag = (html, re) => {
+  const m = html.match(re);
+  return m ? unesc(m[1].trim()) : '';
+};
+
+function renderSectionLinks(html, c) {
+  // Menu labels follow the home page captions, exactly as renderNav() does.
+  const cards = (c.landing && Array.isArray(c.landing.cards)) ? c.landing.cards : [];
+  return html.replace(/(<a[^>]*data-nav-card="([0-2])"[^>]*>)([^<]*)(<\/a>)/g,
+    (m, open, i, old, close) => {
+      const label = cards[Number(i)] && (cards[Number(i)].label || '').trim();
+      return `${open}${label ? esc(label) : old}${close}`;
+    });
+}
+
+function renderPage(file, section, c, opts) {
+  let html = pageSource(file);
+  if (!c) return html;
+
+  const hero = c.hero || {};
+  const fullName = `${hero.firstName || ''} ${hero.lastName || ''}`.trim();
+  const brandCfg = c.brand || {};
+  const wordmark = (brandCfg.text || '').trim() || fullName;
+
+  html = renderSectionLinks(html, c);
+  html = fillById(html, 'brand', esc(wordmark));
+  html = fillById(html, 'footerName', esc(fullName));
+  html = fillById(html, 'footerNameBottom', esc(fullName));
+  html = fillById(html, 'footerTag', esc(hero.tagline));
+  html = fillById(html, 'heroEyebrow', esc(hero.eyebrow));
+  html = fillById(html, 'introText', esc((c.intro || {}).text));
+
+  const s = section && c.sections ? c.sections[section] : null;
+  if (s) {
+    html = fillById(html, `${section}Title`, esc(s.title));
+    html = fillById(html, `${section}Body`, esc(s.body));
+    html = fillById(html, `${section}Cta`, esc(s.cta));
+    if (Array.isArray(s.list)) {
+      html = fillById(html, `${section}List`, s.list.map((t) => `<li>${esc(t)}</li>`).join(''));
+    }
+    // The hero picture is a CSS background, so it has to be set as one.
+    if (s.image) html = fillAttr(html, `${section}Media`, 'style', `background-image:url(&quot;${esc(s.image)}&quot;)`);
+  }
+
+  const contact = c.contact || {};
+  html = fillById(html, 'contactEyebrow', esc(contact.eyebrow));
+  html = fillById(html, 'contactHeading', esc(contact.heading));
+  html = fillById(html, 'contactSub', esc(contact.sub));
+
+  // Home page panels.
+  const cards = (c.landing && Array.isArray(c.landing.cards)) ? c.landing.cards : [];
+  if (cards.length) {
+    html = fillById(html, 'landingCards', cards.map((card) => {
+      const href = safeHref(card.url) || '/';
+      const media = card.image
+        ? `<span class="landing-card-media" style="background-image:url(&quot;${esc(card.image)}&quot;)"></span>`
+        : '<span class="landing-card-media"></span>';
+      return `<a class="landing-card${card.image ? ' has-image' : ''}" href="${esc(href)}">${media}<span class="landing-card-label">${esc(card.label)}</span></a>`;
+    }).join(''));
+  }
+
+  // The live projects are real outbound links; they belong in the HTML.
+  const projects = Array.isArray(c.projects) ? c.projects.filter((p) => p && p.url && p.image) : [];
+  if (projects.length) {
+    html = fillById(html, 'projectsGrid', projects.map((p) => {
+      const href = safeHref(p.url);
+      if (!href) return '';
+      return `<a class="project-card" href="${esc(href)}" target="_blank" rel="noopener">`
+        + `<span class="project-card-shot" style="background-image:url(&quot;${esc(p.image)}&quot;)"></span>`
+        + `<span class="project-card-foot"><span class="project-card-name">${esc(p.title || 'Project')}</span>`
+        + '<span class="project-card-go">View live project ↗</span></span></a>';
+    }).join(''));
+  }
+
+  return html.replace('</head>', `${seoHead(html, c, opts)}</head>`);
+}
+
+// Which SEO page key a URL belongs to, so the dashboard can address them.
+const SEO_KEYS = {
+  '/': 'home',
+  '/projects': 'projects',
+  '/entrepreneur': 'data',
+  '/iman-lifestyle': 'web',
+  '/contact': 'contact',
+};
+// Indexing is off until it is deliberately turned on in the dashboard: an
+// unfinished site is better absent from Google than in it badly.
+// The dashboard's <select> sends a string; a hand-edited document may hold a
+// real boolean. Anything else — including nothing saved yet — means hidden.
+const seoAllowsIndexing = (c) => {
+  const v = ((c || {}).seo || {}).allowIndexing;
+  return v === true || v === 'true';
+};
+
+// Canonical, sharing cards and structured data. The dashboard's wording wins;
+// what the page itself carries is the fallback.
+function seoHead(html, c, opts) {
+  const url = `${SITE_URL}${opts.path === '/' ? '/' : opts.path}`;
+  const seo = (c.seo || {});
+  const perPage = (seo.pages || {})[SEO_KEYS[opts.path]] || {};
+  const title = (perPage.title || '').trim() || readTag(html, /<title>([\s\S]*?)<\/title>/i);
+  const description = (perPage.description || '').trim()
+    || readTag(html, /<meta\s+name="description"\s+content="([^"]*)"/i);
+  const shareImage = (seo.image || '').trim() || OG_IMAGE;
+  const verification = (seo.searchConsole || '').trim();
+  const hero = c.hero || {};
+  const fullName = `${hero.firstName || ''} ${hero.lastName || ''}`.trim();
+
+  const tags = [
+    `<link rel="canonical" href="${esc(url)}" />`,
+    `<meta property="og:type" content="${opts.path === '/' ? 'profile' : 'website'}" />`,
+    `<meta property="og:site_name" content="${esc(fullName)}" />`,
+    `<meta property="og:title" content="${esc(title)}" />`,
+    `<meta property="og:description" content="${esc(description)}" />`,
+    `<meta property="og:url" content="${esc(url)}" />`,
+    `<meta property="og:image" content="${esc(shareImage)}" />`,
+    '<meta property="og:image:width" content="1200" />',
+    '<meta property="og:image:height" content="630" />',
+    '<meta name="twitter:card" content="summary_large_image" />',
+    `<meta name="twitter:title" content="${esc(title)}" />`,
+    `<meta name="twitter:description" content="${esc(description)}" />`,
+    `<meta name="twitter:image" content="${esc(shareImage)}" />`,
+  ];
+  // Hidden by default, and a draft preview is never indexable whatever the
+  // setting says. The sharing card above still works either way — it is read
+  // by the app someone pastes the link into, not by a search engine.
+  if (opts.preview || !seoAllowsIndexing(c)) {
+    tags.push('<meta name="robots" content="noindex, nofollow" />');
+  }
+  if (verification && /^[\w-]{20,100}$/.test(verification)) {
+    tags.push(`<meta name="google-site-verification" content="${esc(verification)}" />`);
+  }
+  if (opts.path === '/') tags.push(personJsonLd(c, fullName));
+  return `  ${tags.join('\n  ')}\n`;
+}
+
+// Who the site is about, in the form search engines read. Not executable, so
+// the strict script-src does not apply to it.
+function personJsonLd(c, fullName) {
+  const socials = Array.isArray((c.contact || {}).socials) ? c.contact.socials : [];
+  const sameAs = socials
+    .map((s) => String((s && s.url) || ''))
+    .filter((u) => /^https?:\/\//i.test(u));
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: fullName,
+    jobTitle: (c.hero || {}).tagline || '',
+    description: (c.intro || {}).text || '',
+    email: (c.contact || {}).email ? `mailto:${c.contact.email}` : undefined,
+    url: `${SITE_URL}/`,
+    image: OG_IMAGE,
+    address: { '@type': 'PostalAddress', addressLocality: 'Beirut', addressCountry: 'LB' },
+    sameAs: sameAs.length ? sameAs : undefined,
+  };
+  // </script> inside the payload would end the block early.
+  const json = JSON.stringify(data).replace(/</g, '\\u003c');
+  return `<script type="application/ld+json">${json}</script>`;
+}
+
+PAGES_SEO.forEach(({ path: route, file, section }) => {
+  app.get(route, async (req, res) => {
+    const preview = req.query.preview === '1';
+    try {
+      const c = preview && (await currentUser(req)) ? await getDraft() : await getContent();
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      // A preview is personal and must not sit in a shared cache; the published
+      // page is cached at the edge and refreshed behind the visitor's back, so
+      // rendering it costs a function call only every few minutes.
+      res.setHeader('Cache-Control', preview
+        ? 'no-store'
+        : 'public, max-age=0, s-maxage=300, stale-while-revalidate=86400');
+      res.send(renderPage(file, section, c, { path: route, preview }));
+    } catch (err) {
+      console.error('Render failed:', err.message);
+      res.sendFile(path.join(__dirname, 'public', file));
+    }
+  });
+});
+
+// robots.txt follows the dashboard's visibility setting, so turning the site
+// on or off in search is one switch rather than a code change.
+app.get('/robots.txt', async (_req, res) => {
+  let allow = false;
+  try { allow = seoAllowsIndexing(await getContent()); } catch { /* stay hidden */ }
+  const body = allow
+    ? [
+      'User-agent: *',
+      'Allow: /',
+      'Disallow: /admin',
+      'Disallow: /admin/',
+      'Disallow: /api/',
+      '# Draft previews belong to the dashboard, not to the public site.',
+      'Disallow: /*?preview=1',
+      '',
+      `Sitemap: ${SITE_URL}/sitemap.xml`,
+      '',
+    ].join('\n')
+    : [
+      '# The site is set to hidden in the dashboard (SEO → Search engines).',
+      'User-agent: *',
+      'Disallow: /',
+      '',
+    ].join('\n');
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300');
+  res.send(body);
+});
+
+// Search engines are pointed here from robots.txt.
+app.get('/sitemap.xml', async (_req, res) => {
+  const urls = PAGES_SEO.map(({ path: p }) => `${SITE_URL}${p === '/' ? '/' : p}`);
+  const body = `<?xml version="1.0" encoding="UTF-8"?>\n`
+    + '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    + urls.map((u) => `  <url><loc>${u}</loc><changefreq>monthly</changefreq></url>`).join('\n')
+    + '\n</urlset>\n';
+  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=3600');
+  res.send(body);
+});
+
+/* ============================================================
  *  Static sites (used locally; on Vercel these are served by routes)
  * ============================================================ */
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
-// Extensionless URLs for the section pages (vercel.json routes them too).
-// Express matches these without regard to case, so /Entrepreneur lands here as
-// well; the Vercel routes spell the capitalised forms out.
-['projects', 'entrepreneur', 'iman-lifestyle', 'contact'].forEach((page) => {
-  app.get(`/${page}`, (_req, res) => res.sendFile(path.join(__dirname, 'public', `${page}.html`)));
-});
+// The section pages themselves are rendered above (SEO); Express matches those
+// routes without regard to case, so /Entrepreneur lands there as well, and the
+// Vercel routes spell the capitalised forms out.
 // Retired addresses: the panel page moved from /landing to the home page, the
 // one-page /portfolio view is gone, and the two section pages were renamed
 // after what they are called. Nothing that was ever linked becomes a dead end.

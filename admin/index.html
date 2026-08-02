@@ -65,6 +65,7 @@
       <nav class="side-nav" id="sideNav">
         <a href="#panel-messages" class="active">Messages<span class="nav-badge" id="msgBadge" hidden>0</span></a>
         <a href="#panel-analytics">Analytics</a>
+        <a href="#panel-seo">SEO</a>
 
         <span class="side-group">Pages</span>
         <a href="#panel-landing">Home page</a>
@@ -117,11 +118,92 @@
           <label>Measurement ID<input data-path="analytics.measurementId" placeholder="G-XXXXXXXXXX" /></label>
           <span class="field-note">Counting starts once this is published — it is part of the website, so it goes live the same way everything else does.</span>
 
+
           <div class="page-bar" data-page-bar="analytics">
             <button type="button" class="btn ghost" data-save-page="analytics">Save</button>
             <button type="button" class="btn primary" data-publish-page="analytics">Publish</button>
             <button type="button" class="btn ghost small" data-history-page="analytics">History</button>
             <span class="page-state" data-page-state="analytics"></span>
+          </div>
+        </section>
+
+        <!-- SEO: how the site appears in search results and when a link to it
+             is shared, plus whether search engines may list it at all. -->
+        <section class="panel" id="panel-seo">
+          <h2>SEO</h2>
+          <p class="panel-hint">How your website looks in Google and when someone shares a link to it. Nothing here changes the pages themselves.</p>
+
+          <h3 class="panel-sub">Search engines</h3>
+          <label>Listing in Google
+            <select data-path="seo.allowIndexing" id="seoIndexing">
+              <option value="false">Hidden — keep the site out of search results</option>
+              <option value="true">Visible — allow Google to list the site</option>
+            </select>
+          </label>
+          <span class="field-note" id="seoIndexNote"></span>
+
+          <h3 class="panel-sub">Search result wording</h3>
+          <p class="panel-hint">The blue line and the grey line Google shows for each page. Leave a field empty and the page keeps the wording it ships with. Aim for about 60 characters of title and 155 of description.</p>
+          <div class="seo-pages" id="seoPages">
+            <div class="seo-page" data-seo-page="home">
+              <h4>Home <span class="seo-url">/</span></h4>
+              <label>Search title<input data-path="seo.pages.home.title" data-seo-title="home" maxlength="70" /></label>
+              <label>Search description<textarea rows="2" data-path="seo.pages.home.description" data-seo-desc="home" maxlength="180"></textarea></label>
+              <div class="serp-preview" data-serp="home"></div>
+            </div>
+            <div class="seo-page" data-seo-page="projects">
+              <h4>Projects <span class="seo-url">/projects</span></h4>
+              <label>Search title<input data-path="seo.pages.projects.title" data-seo-title="projects" maxlength="70" /></label>
+              <label>Search description<textarea rows="2" data-path="seo.pages.projects.description" data-seo-desc="projects" maxlength="180"></textarea></label>
+              <div class="serp-preview" data-serp="projects"></div>
+            </div>
+            <div class="seo-page" data-seo-page="data">
+              <h4>Entrepreneur <span class="seo-url">/entrepreneur</span></h4>
+              <label>Search title<input data-path="seo.pages.data.title" data-seo-title="data" maxlength="70" /></label>
+              <label>Search description<textarea rows="2" data-path="seo.pages.data.description" data-seo-desc="data" maxlength="180"></textarea></label>
+              <div class="serp-preview" data-serp="data"></div>
+            </div>
+            <div class="seo-page" data-seo-page="web">
+              <h4>Iman Lifestyle <span class="seo-url">/iman-lifestyle</span></h4>
+              <label>Search title<input data-path="seo.pages.web.title" data-seo-title="web" maxlength="70" /></label>
+              <label>Search description<textarea rows="2" data-path="seo.pages.web.description" data-seo-desc="web" maxlength="180"></textarea></label>
+              <div class="serp-preview" data-serp="web"></div>
+            </div>
+            <div class="seo-page" data-seo-page="contact">
+              <h4>Contact <span class="seo-url">/contact</span></h4>
+              <label>Search title<input data-path="seo.pages.contact.title" data-seo-title="contact" maxlength="70" /></label>
+              <label>Search description<textarea rows="2" data-path="seo.pages.contact.description" data-seo-desc="contact" maxlength="180"></textarea></label>
+              <div class="serp-preview" data-serp="contact"></div>
+            </div>
+          </div>
+
+          <h3 class="panel-sub">Sharing picture</h3>
+          <p class="panel-hint">Shown when a link to the site is pasted into WhatsApp, LinkedIn or X. Best at 1200 × 630 pixels. Without one, the rose card that ships with the site is used.</p>
+          <div class="section-grid">
+            <div class="media-col">
+              <div class="img-preview" data-preview="ogimage"><span>No image</span></div>
+              <label class="upload-btn">Upload picture
+                <input type="file" accept="image/*" data-upload="ogimage" hidden />
+              </label>
+              <button type="button" class="btn ghost remove-btn" data-remove="ogimage" hidden>Remove picture</button>
+              <small class="upload-status" data-status="ogimage"></small>
+            </div>
+            <p class="panel-hint">A shared link keeps showing the old picture for a while — WhatsApp and LinkedIn remember it. LinkedIn's Post Inspector can clear theirs.</p>
+          </div>
+
+          <h3 class="panel-sub">Google Search Console</h3>
+          <p class="panel-hint">To register the site at <a href="https://search.google.com/search-console" target="_blank" rel="noopener">search.google.com/search-console</a>, pick the <strong>HTML tag</strong> method and paste the code from inside <code>content="…"</code> here — not the whole tag. Publish, then press Verify there.</p>
+          <label>Verification code<input data-path="seo.searchConsole" placeholder="AbCdEf1234…" /></label>
+          <span class="field-note">Search Console shows which searches bring people to the site — the part Google Analytics does not tell you. Verifying works even while the site is hidden.</span>
+
+          <h3 class="panel-sub">Files search engines read</h3>
+          <p class="panel-hint">Written by the site itself, from the setting above: <a href="/robots.txt" target="_blank" rel="noopener">robots.txt</a> · <a href="/sitemap.xml" target="_blank" rel="noopener">sitemap.xml</a></p>
+
+          <div class="page-bar" data-page-bar="seo">
+            <button type="button" class="btn ghost" data-save-page="seo">Save</button>
+            <button type="button" class="btn primary" data-publish-page="seo">Publish</button>
+            <button type="button" class="btn ghost small" data-history-page="seo">History</button>
+            <span class="page-state" data-page-state="seo"></span>
           </div>
         </section>
 

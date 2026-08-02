@@ -13,7 +13,7 @@ function renderBrand(c) {
   const cfg = c.brand || {};
   const fullName = `${hero.firstName || ''} ${hero.lastName || ''}`.trim();
   const wordmark = (cfg.text || '').trim() || fullName;
-  if (fullName) document.title = fullName;
+  // The <title> in the page is written for search results; leave it be.
   if (!wordmark && !cfg.logo) return;
 
   el.innerHTML = '';
