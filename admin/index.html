@@ -177,6 +177,17 @@
               <label>Call-to-action text<input data-path="sections.entrepreneur.cta" /></label>
             </div>
           </div>
+
+          <div class="projects-editor">
+            <h3>Live projects</h3>
+            <p class="panel-hint">Paste a project's link and click Add — its screenshot and title are captured automatically. Projects appear as a grid of screenshots behind the <strong>Live projects</strong> button on this page, in the order listed here. <strong>Save</strong> keeps the list, <strong>Publish</strong> puts it on the website.</p>
+            <div class="projects-list" id="projectsList"></div>
+            <div class="project-add">
+              <input type="url" id="newProjectUrl" placeholder="https://your-project.com" />
+              <button type="button" class="btn" id="addProjectBtn">Add project</button>
+            </div>
+            <small class="project-status" id="projectStatus"></small>
+          </div>
         </section>
 
         <section class="panel" id="panel-philanthropist" data-section="philanthropist">
@@ -207,16 +218,6 @@
             </div>
           </div>
 
-          <div class="projects-editor">
-            <h3>Live projects</h3>
-            <p class="panel-hint">Paste a project's link and click Add — its screenshot and title are captured automatically. Projects appear as a grid of screenshots behind the <strong>Live projects</strong> button on the Web page, in the order listed here. <strong>Save</strong> keeps the list, <strong>Publish</strong> puts it on the website.</p>
-            <div class="projects-list" id="projectsList"></div>
-            <div class="project-add">
-              <input type="url" id="newProjectUrl" placeholder="https://your-project.com" />
-              <button type="button" class="btn" id="addProjectBtn">Add project</button>
-            </div>
-            <small class="project-status" id="projectStatus"></small>
-          </div>
         </section>
 
         <!-- Contact page (text only; email/phone/socials live under Settings) -->

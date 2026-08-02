@@ -220,7 +220,7 @@ button.section-link {
   transform: translateY(-2px);
 }
 
-/* Heading of the live-projects overlay on the Web page. */
+/* Heading of the live-projects overlay on the Data page. */
 .web-live-title {
   font-family: var(--sans);
   font-size: 0.72rem;
@@ -499,9 +499,9 @@ button.section-link {
     linear-gradient(45deg, #e19bb8, #f8d5e2);
 }
 
-/* ---------- Live projects overlay (Web page) ----------
+/* ---------- Live projects overlay (Data page) ----------
    The projects are not on the page: the button in the hero opens them over it,
-   so the Web page stays a single screen like the other two. */
+   so the page stays a single screen like the other two. */
 .projects-overlay {
   position: fixed;
   inset: 0;

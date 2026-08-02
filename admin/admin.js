@@ -433,7 +433,7 @@ document.querySelectorAll('[data-upload]').forEach((input) => {
   });
 });
 
-/* ---------- web projects (the buttons on the Web page) ---------- */
+/* ---------- live projects (the grid behind the Data page's button) ---------- */
 function projImgSrc(img) {
   if (!img) return '';
   return /^https?:\/\//.test(img) ? img : `/${img.replace(/^\//, '')}`;
@@ -508,7 +508,7 @@ function moveProject(i, dir) {
   renderProjectsEditor();
 }
 function removeProject(i) {
-  if (!confirm('Remove this project from the Web page?')) return;
+  if (!confirm('Remove this project from the live projects list?')) return;
   content.projects.splice(i, 1);
   renderProjectsEditor();
 }

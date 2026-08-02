@@ -45,12 +45,57 @@
           <ul class="section-tags" id="entrepreneurList"></ul>
           <div class="section-links">
             <a href="/contact" class="section-link" id="entrepreneurCta"></a>
+            <!-- Opens the live sites over the picture; nothing about them sits
+                 on the page itself, so this page stays one screen like the
+                 others. -->
+            <button type="button" class="section-link" id="liveProjectsBtn"
+                    aria-haspopup="dialog" aria-expanded="false" aria-controls="projectsOverlay">
+              Live projects
+            </button>
             <a href="/projects" class="section-link">Project Management</a>
             <a href="/web" class="section-link">Web Projects</a>
           </div>
         </div>
       </div>
     </section>
+
+    <!-- The live sites, opened by the button above rather than shown on the
+         page. Managed from the dashboard; the cards below are the fallback the
+         markup ships with. -->
+    <div class="projects-overlay" id="projectsOverlay" role="dialog" aria-modal="true"
+         aria-labelledby="projectsOverlayTitle" hidden>
+      <div class="projects-overlay-inner">
+        <div class="projects-overlay-head">
+          <h2 class="web-live-title" id="projectsOverlayTitle">Live projects</h2>
+          <button type="button" class="projects-overlay-close" id="projectsOverlayClose" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <div class="projects-grid" id="projectsGrid">
+          <a class="project-card" href="https://exam-management-system-kappa.vercel.app/" target="_blank" rel="noopener">
+            <span class="project-card-shot" style="background-image:url('assets/uploads/proj-exam.png?v=2')"></span>
+            <span class="project-card-foot">
+              <span class="project-card-name">Exam System</span>
+              <span class="project-card-go">View live project ↗</span>
+            </span>
+          </a>
+          <a class="project-card" href="https://hibas-bakery.vercel.app/" target="_blank" rel="noopener">
+            <span class="project-card-shot" style="background-image:url('assets/uploads/proj-bakery.png?v=2')"></span>
+            <span class="project-card-foot">
+              <span class="project-card-name">Hiba's Bakery</span>
+              <span class="project-card-go">View live project ↗</span>
+            </span>
+          </a>
+          <a class="project-card" href="https://makeup-by-ikbal.vercel.app/" target="_blank" rel="noopener">
+            <span class="project-card-shot" style="background-image:url('assets/uploads/proj-makeup.png?v=2')"></span>
+            <span class="project-card-foot">
+              <span class="project-card-name">Makeup by Ikbal</span>
+              <span class="project-card-go">View live project ↗</span>
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
   </main>
 
 

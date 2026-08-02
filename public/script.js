@@ -218,7 +218,7 @@ function hydrate(c) {
   // Nav labels follow the home page panel captions.
   renderNav(c);
 
-  // Web Projects buttons — rebuilt from content when projects are defined.
+  // Live projects — rebuilt from content when projects are defined.
   renderProjects(c.projects);
 }
 
@@ -236,9 +236,9 @@ function renderNav(c) {
 }
 
 // Replace the overlay's hardcoded cards with the admin-managed project list.
-// If there are no valid projects the static markup in web.html is left as it is.
+// If there are no valid projects the static markup in data.html is left as it is.
 function renderProjects(projects) {
-  const grid = document.getElementById('webProjects');
+  const grid = document.getElementById('projectsGrid');
   if (!grid || !Array.isArray(projects)) return;
   const valid = projects.filter((p) => p && p.url && p.image);
   if (!valid.length) return;
@@ -424,7 +424,7 @@ function initUI() {
     });
   }
 
-  // Live projects overlay — the Web page's button opens the projects over the
+  // Live projects overlay — the Data page's button opens the projects over the
   // picture. The `hidden` attribute is the whole of it: no class to fall out of
   // step with, and the page behind is frozen while it is open.
   const overlay = document.getElementById('projectsOverlay');

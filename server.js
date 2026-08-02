@@ -365,8 +365,10 @@ async function saveDraft(data) {
 const CONTENT_PAGES = {
   home: { label: 'Home page', paths: ['landing'] },
   projects: { label: 'Projects', paths: ['sections.actress'] },
-  data: { label: 'Data', paths: ['sections.entrepreneur'] },
-  web: { label: 'Web', paths: ['sections.philanthropist', 'projects'] },
+  // The live-projects grid opens from the Data page, so the project list is
+  // published with it rather than with the Web page it used to sit on.
+  data: { label: 'Data', paths: ['sections.entrepreneur', 'projects'] },
+  web: { label: 'Web', paths: ['sections.philanthropist'] },
   contact: { label: 'Contact page', paths: ['contact.eyebrow', 'contact.heading', 'contact.sub'] },
   nameintro: { label: 'Name & intro', paths: ['hero', 'intro', 'quote'] },
   settings: { label: 'Settings', paths: ['contact.email', 'contact.socials', 'brand'] },
