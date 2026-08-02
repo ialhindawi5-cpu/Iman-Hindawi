@@ -119,7 +119,7 @@ function hydrate(c) {
   ['actress', 'entrepreneur', 'philanthropist'].forEach((key) => {
     const s = c.sections[key];
     if (!s) return;
-    setText(`${key}Index`, s.index);
+    // No index label on the pages any more; the stored value is left alone.
     setText(`${key}Title`, s.title);
     setText(`${key}Body`, s.body);
     setList(`${key}List`, s.list);
