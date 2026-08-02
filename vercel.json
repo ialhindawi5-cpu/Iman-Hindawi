@@ -35,11 +35,15 @@
     { "src": "/admin/(.+)", "dest": "/admin/$1" },
     { "src": "/", "dest": "/public/index.html" },
     { "src": "/projects", "dest": "/public/projects.html" },
-    { "src": "/data", "dest": "/public/data.html" },
-    { "src": "/web", "dest": "/public/web.html" },
+    { "src": "/entrepreneur", "dest": "/public/entrepreneur.html" },
+    { "src": "/iman-lifestyle", "dest": "/public/iman-lifestyle.html" },
     { "src": "/contact", "dest": "/public/contact.html" },
     { "src": "/portfolio", "status": 308, "headers": { "Location": "/" } },
     { "src": "/landing", "status": 308, "headers": { "Location": "/" } },
+    { "src": "/data", "status": 308, "headers": { "Location": "/entrepreneur" } },
+    { "src": "/web", "status": 308, "headers": { "Location": "/iman-lifestyle" } },
+    { "src": "/Entrepreneur", "status": 308, "headers": { "Location": "/entrepreneur" } },
+    { "src": "/Iman-Lifestyle", "status": 308, "headers": { "Location": "/iman-lifestyle" } },
     { "src": "/(.*)", "dest": "/public/$1" }
   ]
 }

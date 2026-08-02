@@ -40,8 +40,8 @@
   "landing": {
     "cards": [
       { "label": "Project Management", "url": "/projects", "image": "" },
-      { "label": "Data Analytics", "url": "/data", "image": "" },
-      { "label": "Web Projects", "url": "/web", "image": "" }
+      { "label": "Entrepreneur", "url": "/entrepreneur", "image": "" },
+      { "label": "Iman Lifestyle", "url": "/iman-lifestyle", "image": "" }
     ]
   },
   "projects": [

@@ -1072,13 +1072,17 @@ app.delete('/api/messages/:id', requireAuth, async (req, res) => {
  * ============================================================ */
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 // Extensionless URLs for the section pages (vercel.json routes them too).
-['projects', 'data', 'web', 'contact'].forEach((page) => {
+// Express matches these without regard to case, so /Entrepreneur lands here as
+// well; the Vercel routes spell the capitalised forms out.
+['projects', 'entrepreneur', 'iman-lifestyle', 'contact'].forEach((page) => {
   app.get(`/${page}`, (_req, res) => res.sendFile(path.join(__dirname, 'public', `${page}.html`)));
 });
-// Retired addresses: the panel page moved from /landing to the home page, and
-// the one-page /portfolio view is gone. Both send visitors to the home page
-// rather than a dead end.
+// Retired addresses: the panel page moved from /landing to the home page, the
+// one-page /portfolio view is gone, and the two section pages were renamed
+// after what they are called. Nothing that was ever linked becomes a dead end.
 app.get(['/landing', '/portfolio'], (_req, res) => res.redirect(308, '/'));
+app.get('/data', (_req, res) => res.redirect(308, '/entrepreneur'));
+app.get('/web', (_req, res) => res.redirect(308, '/iman-lifestyle'));
 app.use('/', express.static(path.join(__dirname, 'public')));
 
 // ---------- Error handler (never leak stack traces) ----------

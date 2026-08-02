@@ -189,8 +189,8 @@ function landingCardIndex(section) {
 // first save. [data-path] writes also need real arrays to index into.
 const DEFAULT_LANDING_CARDS = [
   { label: 'Project Management', url: '/projects', image: '' },
-  { label: 'Data Analytics', url: '/data', image: '' },
-  { label: 'Web Projects', url: '/web', image: '' },
+  { label: 'Entrepreneur', url: '/entrepreneur', image: '' },
+  { label: 'Iman Lifestyle', url: '/iman-lifestyle', image: '' },
 ];
 function ensureLanding() {
   content.landing = content.landing || {};

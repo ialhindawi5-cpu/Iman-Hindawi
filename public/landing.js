@@ -42,8 +42,8 @@ function renderBrand(c) {
 // missing ones fall back to these rather than leaving a one-panel page.
 const DEFAULT_CARDS = [
   { label: 'Project Management', url: '/projects', image: '' },
-  { label: 'Data Analytics', url: '/data', image: '' },
-  { label: 'Web Projects', url: '/web', image: '' },
+  { label: 'Entrepreneur', url: '/entrepreneur', image: '' },
+  { label: 'Iman Lifestyle', url: '/iman-lifestyle', image: '' },
 ];
 
 function renderCards(c) {

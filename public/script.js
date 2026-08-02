@@ -236,7 +236,7 @@ function renderNav(c) {
 }
 
 // Replace the overlay's hardcoded cards with the admin-managed project list.
-// If there are no valid projects the static markup in data.html is left as it is.
+// If there are no valid projects the static markup in entrepreneur.html stays.
 function renderProjects(projects) {
   const grid = document.getElementById('projectsGrid');
   if (!grid || !Array.isArray(projects)) return;
