@@ -26,6 +26,20 @@ body {
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 
+/* Draft preview (?preview=1, admins only) — along the bottom so it never sits
+   over the fixed header, and unmissable while it is there. */
+.preview-banner {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 999;
+  padding: 0.65rem 1rem;
+  background: #7a1c47;
+  color: #fff;
+  text-align: center;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+}
+
 /* ---------- Header ---------- */
 .site-header {
   position: fixed;

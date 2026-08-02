@@ -449,6 +449,58 @@ select:focus {
   .project-actions { justify-content: flex-start; }
 }
 
+/* Save / Publish / History, one row per page */
+.page-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1.5rem;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fdf6f9;
+}
+.page-state {
+  margin-left: auto;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+/* Saved but not on the website yet — the one state worth catching the eye. */
+.page-state.waiting { color: var(--accent); font-weight: 600; }
+.page-state.ok { color: var(--ok); font-weight: 600; }
+.page-state.err { color: var(--err); font-weight: 600; }
+@media (max-width: 620px) {
+  .page-state { margin-left: 0; width: 100%; }
+}
+
+/* History */
+.modal.modal-wide { width: min(720px, 100%); max-height: 86vh; overflow-y: auto; }
+.history-list { list-style: none; margin: 0.4rem 0 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.history-row { border: 1px solid var(--line); border-radius: 10px; padding: 0.7rem 0.85rem; }
+.history-head { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+.history-when { font-size: 0.88rem; font-weight: 500; }
+.history-action {
+  font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 0.12rem 0.5rem; border-radius: 999px;
+  background: #fae7ee; color: var(--accent-dark);
+}
+.history-action.publish { background: var(--accent); color: #fff; }
+.history-scope {
+  font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--ink-soft); border: 1px solid var(--line);
+  padding: 0.1rem 0.45rem; border-radius: 999px;
+}
+.history-who { font-size: 0.78rem; color: var(--ink-soft); word-break: break-all; }
+.history-actions { margin-left: auto; display: flex; gap: 0.35rem; }
+.history-body {
+  margin-top: 0.6rem; padding: 0.7rem; border-radius: 8px;
+  background: #fdf6f9; border: 1px solid var(--line);
+  font-size: 0.76rem; line-height: 1.45; white-space: pre-wrap; word-break: break-word;
+  max-height: 320px; overflow-y: auto;
+}
+.history-empty { color: var(--ink-soft); font-size: 0.86rem; padding: 0.6rem 0; }
+
 /* Settings tabs — the three parts of the panel, one at a time */
 .settings-tabs {
   display: flex;

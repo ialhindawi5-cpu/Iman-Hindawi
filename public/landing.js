@@ -115,14 +115,42 @@ function renderSocials(c) {
   wrap.appendChild(circleLink('/contact', MAIL_ICON, 'Contact', false));
 }
 
+// Same preview rule as the rest of the site: ?preview=1 shows the dashboard's
+// unpublished draft, but only to a signed-in admin (see script.js).
+const PREVIEW = new URLSearchParams(location.search).get('preview') === '1';
+
+function showPreviewBanner() {
+  if (document.getElementById('previewBanner')) return;
+  const bar = document.createElement('div');
+  bar.id = 'previewBanner';
+  bar.className = 'preview-banner';
+  bar.textContent = 'Preview — unpublished changes. Visitors still see the published site.';
+  document.body.appendChild(bar);
+  document.body.classList.add('has-preview-banner');
+}
+
+function keepPreviewOnLinks() {
+  document.querySelectorAll('a[href^="/"]').forEach((a) => {
+    const url = new URL(a.getAttribute('href'), location.origin);
+    if (url.searchParams.get('preview') === '1') return;
+    url.searchParams.set('preview', '1');
+    a.setAttribute('href', url.pathname + url.search + url.hash);
+  });
+}
+
 (async function load() {
   try {
-    const res = await fetch('/api/content', { cache: 'no-store' });
+    const res = await fetch(PREVIEW ? '/api/content?preview=1' : '/api/content', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+    });
     if (!res.ok) return;
+    const isPreview = res.headers.get('x-preview') === '1';
     const c = await res.json();
     renderBrand(c);
     renderCards(c);
     renderSocials(c);
+    if (isPreview) { showPreviewBanner(); keepPreviewOnLinks(); }
   } catch (_) {
     /* Served without the API: the static markup stays visible. */
   } finally {

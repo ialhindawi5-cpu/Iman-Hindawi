@@ -240,6 +240,22 @@ async function requireAuth(req, res, next) {
   }
 }
 
+// Same check as requireAuth, but it answers rather than rejects — for routes
+// that are public and only behave differently for a signed-in admin (preview).
+async function currentUser(req) {
+  const token = parseCookies(req)[SESSION_COOKIE];
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, AUTH_SECRET, { algorithms: ['HS256'] });
+    const rows = await sql`SELECT id, email, role, token_version FROM users WHERE id = ${payload.sub}`;
+    const user = rows[0];
+    if (!user || Number(payload.tv) !== user.token_version) return null;
+    return { userId: user.id, email: user.email, role: user.role };
+  } catch {
+    return null;
+  }
+}
+
 const findUserByEmail = async (email) => {
   const rows = await sql`SELECT * FROM users WHERE email = ${String(email || '').toLowerCase().trim()}`;
   return rows[0] || null;
@@ -320,12 +336,93 @@ async function sendContactNotification(msg) {
 /* ============================================================
  *  Content store (Postgres)
  * ============================================================ */
+// Two documents live in the row: `data` is the published website, `draft` is
+// what the dashboard is editing. Save writes the draft; Publish copies one
+// page's slice of the draft into the published document.
 async function getContent() {
   const rows = await sql`SELECT data FROM content WHERE id = 1`;
   return rows[0] ? rows[0].data : null;
 }
 async function saveContent(data) {
   await sql`UPDATE content SET data = ${JSON.stringify(data)}::jsonb WHERE id = 1`;
+}
+// No draft yet (a site that has never been saved since this feature landed)
+// reads as a copy of the published document, so nothing starts out "pending".
+async function getDraft() {
+  const rows = await sql`SELECT data, draft FROM content WHERE id = 1`;
+  if (!rows[0]) return null;
+  return rows[0].draft || rows[0].data;
+}
+async function saveDraft(data) {
+  await sql`UPDATE content SET draft = ${JSON.stringify(data)}::jsonb WHERE id = 1`;
+}
+
+/* ---------- pages ---------- */
+// A "page" is a named set of paths into the content document. Publishing a page
+// copies exactly those paths, so editing the Contact page cannot push out a
+// half-finished Home page — and the contact email (Settings) stays separate
+// from the contact page's wording even though both live under `contact`.
+const CONTENT_PAGES = {
+  home: { label: 'Home page', paths: ['landing'] },
+  projects: { label: 'Projects', paths: ['sections.actress'] },
+  data: { label: 'Data', paths: ['sections.entrepreneur'] },
+  web: { label: 'Web', paths: ['sections.philanthropist', 'projects'] },
+  contact: { label: 'Contact page', paths: ['contact.eyebrow', 'contact.heading', 'contact.sub'] },
+  nameintro: { label: 'Name & intro', paths: ['hero', 'intro', 'quote'] },
+  settings: { label: 'Settings', paths: ['contact.email', 'contact.socials', 'brand'] },
+};
+const ALL_PAGES = 'all';
+
+function pagePaths(page) {
+  if (page === ALL_PAGES) {
+    return Object.values(CONTENT_PAGES).reduce((all, p) => all.concat(p.paths), []);
+  }
+  return CONTENT_PAGES[page] ? CONTENT_PAGES[page].paths : null;
+}
+function readPath(obj, path) {
+  return path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
+}
+function writePath(obj, path, value) {
+  const keys = path.split('.');
+  const last = keys.pop();
+  const target = keys.reduce((o, k) => (o[k] = o[k] || {}), obj);
+  if (value === undefined) delete target[last];
+  else target[last] = value;
+}
+// Structural equality is enough to answer "is there anything to publish?" —
+// both sides are plain JSON written by the same code.
+function samePath(a, b, path) {
+  return JSON.stringify(readPath(a, path) ?? null) === JSON.stringify(readPath(b, path) ?? null);
+}
+function pendingPages(draft, published) {
+  const pending = {};
+  Object.keys(CONTENT_PAGES).forEach((page) => {
+    pending[page] = CONTENT_PAGES[page].paths.some((p) => !samePath(draft, published, p));
+  });
+  return pending;
+}
+// Copies one page's paths from `from` into a copy of `into`.
+function mergePage(into, from, page) {
+  const paths = pagePaths(page);
+  if (!paths) return null;
+  const next = JSON.parse(JSON.stringify(into));
+  paths.forEach((p) => writePath(next, p, readPath(from, p)));
+  return next;
+}
+
+const VERSIONS_KEPT = 30;
+// The snapshot is the whole document as it stood after the action; restoring
+// takes only the page's paths out of it. Trimming keeps the table from growing
+// without bound on a site that is saved many times a day.
+async function recordVersion({ page, action, data, author, label }) {
+  await sql`INSERT INTO content_versions (id, page, action, label, author, data)
+            VALUES (${crypto.randomUUID()}, ${page}, ${action}, ${label || null},
+                    ${author || null}, ${JSON.stringify(data)}::jsonb)`;
+  await sql`DELETE FROM content_versions
+            WHERE page = ${page} AND id NOT IN (
+              SELECT id FROM content_versions WHERE page = ${page}
+              ORDER BY created_at DESC LIMIT ${VERSIONS_KEPT}
+            )`;
 }
 
 /* ============================================================
@@ -653,21 +750,123 @@ app.delete('/api/users/:id', requireAuth, async (req, res) => {
 /* ============================================================
  *  Content routes
  * ============================================================ */
-app.get('/api/content', async (_req, res) => {
-  try { res.json(await getContent()); }
-  catch { res.status(500).json({ error: 'Could not read content' }); }
+// The website reads the published document. ?preview=1 serves the draft
+// instead, but only to a signed-in admin — it is how Save can be looked at
+// before Publish puts it in front of visitors.
+app.get('/api/content', async (req, res) => {
+  try {
+    if (req.query.preview === '1' && (await currentUser(req))) {
+      // Lets the page tell a real preview from the ordinary site, so the
+      // "unpublished" banner never shows over published content.
+      res.setHeader('X-Preview', '1');
+      return res.json(await getDraft());
+    }
+    res.json(await getContent());
+  } catch { res.status(500).json({ error: 'Could not read content' }); }
 });
 
+// What the dashboard edits: the draft, plus which pages differ from the live
+// site so each panel can say whether it has anything waiting to be published.
+app.get('/api/content/draft', requireAuth, async (_req, res) => {
+  try {
+    const [draft, published] = await Promise.all([getDraft(), getContent()]);
+    res.json({ content: draft, pending: pendingPages(draft, published) });
+  } catch { res.status(500).json({ error: 'Could not read content' }); }
+});
+
+// Save — writes the draft only. The live site is untouched until Publish.
+// `page` names the panel the Save came from; it only labels the history entry,
+// since the dashboard always sends the whole document.
 app.put('/api/content', requireAuth, async (req, res) => {
   try {
-    const incoming = req.body;
+    const body = req.body || {};
+    const incoming = body.content && body.content.hero ? body.content : body;
+    const page = body.page && (CONTENT_PAGES[body.page] || body.page === ALL_PAGES) ? body.page : ALL_PAGES;
     if (!incoming || !incoming.hero || !incoming.sections) {
       return res.status(400).json({ error: 'Invalid content payload' });
     }
-    await saveContent(incoming);
-    res.json({ ok: true });
+    await saveDraft(incoming);
+    await recordVersion({ page, action: 'save', data: incoming, author: req.user?.email });
+    const published = await getContent();
+    res.json({ ok: true, pending: pendingPages(incoming, published) });
   } catch {
     res.status(500).json({ error: 'Could not save content' });
+  }
+});
+
+// Publish — copies one page's slice of the draft into the live document.
+app.post('/api/content/publish', requireAuth, async (req, res) => {
+  const page = String(req.body?.page || '');
+  if (page !== ALL_PAGES && !CONTENT_PAGES[page]) {
+    return res.status(400).json({ error: 'Unknown page' });
+  }
+  try {
+    const [draft, published] = await Promise.all([getDraft(), getContent()]);
+    const next = mergePage(published, draft, page);
+    await saveContent(next);
+    await recordVersion({ page, action: 'publish', data: next, author: req.user?.email });
+    res.json({ ok: true, pending: pendingPages(draft, next) });
+  } catch {
+    res.status(500).json({ error: 'Could not publish' });
+  }
+});
+
+// History for one page, newest first. The snapshots themselves are not sent
+// here — a list of them would be a large payload for something mostly scrolled.
+app.get('/api/content/versions', requireAuth, async (req, res) => {
+  const page = String(req.query.page || '');
+  if (page !== ALL_PAGES && !CONTENT_PAGES[page]) {
+    return res.status(400).json({ error: 'Unknown page' });
+  }
+  try {
+    // "Save all changes" is filed under `all`; it changed this page too, so a
+    // page's history has to show those alongside its own entries.
+    const rows = await sql`SELECT id, page, action, author, created_at
+                           FROM content_versions
+                           WHERE page = ${page} OR page = ${ALL_PAGES}
+                           ORDER BY created_at DESC LIMIT ${VERSIONS_KEPT}`;
+    res.json({ versions: rows });
+  } catch { res.status(500).json({ error: 'Could not read history' }); }
+});
+
+// One version, cut down to the page it belongs to — that is all the dashboard
+// shows and all a restore would put back.
+app.get('/api/content/versions/:id', requireAuth, async (req, res) => {
+  try {
+    const rows = await sql`SELECT id, page, action, author, created_at, data
+                           FROM content_versions WHERE id = ${req.params.id}`;
+    const row = rows[0];
+    if (!row) return res.status(404).json({ error: 'Version not found' });
+    // A snapshot filed under `all` is read through whichever page asked for it.
+    const page = CONTENT_PAGES[req.query.page] ? String(req.query.page) : row.page;
+    const paths = pagePaths(page) || [];
+    const slice = {};
+    paths.forEach((p) => { slice[p] = readPath(row.data, p) ?? null; });
+    res.json({ version: { ...row, data: undefined }, page, slice });
+  } catch { res.status(500).json({ error: 'Could not read version' }); }
+});
+
+// Restore puts the old wording back into the draft, not onto the website:
+// it can be looked at, edited further, then published like any other change.
+app.post('/api/content/versions/:id/restore', requireAuth, async (req, res) => {
+  try {
+    const rows = await sql`SELECT page, data, created_at FROM content_versions WHERE id = ${req.params.id}`;
+    const row = rows[0];
+    if (!row) return res.status(404).json({ error: 'Version not found' });
+    // Restoring from a whole-site save puts back only the page it was asked for.
+    const page = CONTENT_PAGES[req.body?.page] ? String(req.body.page) : row.page;
+    const draft = await getDraft();
+    const next = mergePage(draft, row.data, page);
+    if (!next) return res.status(400).json({ error: 'Unknown page' });
+    await saveDraft(next);
+    await recordVersion({
+      page, action: 'restore', data: next, author: req.user?.email,
+      label: new Date(row.created_at).toISOString(),
+    });
+    const published = await getContent();
+    res.json({ ok: true, content: next, pending: pendingPages(next, published) });
+  } catch {
+    res.status(500).json({ error: 'Could not restore that version' });
   }
 });
 
@@ -751,8 +950,10 @@ app.post('/api/upload/:section', requireAuth, rateLimit('upload', 40, 10 * 60 * 
   if (!looksLikeImage(req.file.buffer)) return res.status(400).json({ error: 'File is not a valid image' });
   try {
     const url = await storeImage(req.params.section, req.file, req);
-    const content = await getContent();
-    if (setSectionImage(content, req.params.section, url)) await saveContent(content);
+    // Into the draft: a picture is a change like any other and goes onto the
+    // website when its page is published.
+    const content = await getDraft();
+    if (setSectionImage(content, req.params.section, url)) await saveDraft(content);
     res.json({ ok: true, path: url });
   } catch (err) {
     console.error('Upload failed:', err.message);
@@ -783,10 +984,15 @@ app.delete('/api/upload/:section', requireAuth, async (req, res) => {
   const section = req.params.section;
   if (!ALLOWED_SECTIONS.has(section)) return res.status(400).json({ error: 'Invalid section' });
   try {
-    const content = await getContent();
+    const content = await getDraft();
     const current = getSectionImage(content, section);
-    if (current) await deleteStoredImage(current, req);
-    if (setSectionImage(content, section, '')) await saveContent(content);
+    // Only bin the file if the live site is not still showing it — the picture
+    // stays on the published page until this removal is published too.
+    const published = await getContent();
+    if (current && getSectionImage(published, section) !== current) {
+      await deleteStoredImage(current, req);
+    }
+    if (setSectionImage(content, section, '')) await saveDraft(content);
     res.json({ ok: true });
   } catch (err) {
     console.error('Remove failed:', err.message);

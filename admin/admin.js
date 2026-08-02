@@ -553,7 +553,7 @@ async function addProject() {
     content.projects.push({ url: data.url, title: data.title || '', image: data.image });
     input.value = '';
     renderProjectsEditor();
-    projStatus('Project added ✓ — click Save changes to publish it live.', 'ok');
+    projStatus('Project added ✓ — Save it, then Publish to put it on the website.', 'ok');
   } catch (err) {
     projStatus(err.message, 'err');
   } finally {
@@ -567,28 +567,252 @@ if (newProjectUrl) newProjectUrl.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); addProject(); }
 });
 
-/* ---------- save content ---------- */
-async function save() {
+/* ---------- save, publish, history ---------- */
+// Save stores the draft; Publish copies one page of that draft onto the live
+// website. Every panel sends the whole document on Save (collect() gathers all
+// of it) — the page name only says which panel the save came from, and which
+// slice Publish should push out.
+const PAGE_LABELS = {
+  home: 'Home page',
+  projects: 'Projects',
+  data: 'Data',
+  web: 'Web',
+  contact: 'Contact page',
+  nameintro: 'Name & intro',
+  settings: 'Settings',
+  all: 'the whole site',
+};
+// Which pages hold work that is saved but not on the website yet.
+let pending = {};
+
+function pageStateEl(page) { return document.querySelector(`[data-page-state="${page}"]`); }
+
+function renderPending() {
+  Object.keys(PAGE_LABELS).forEach((page) => {
+    const el = pageStateEl(page);
+    if (!el) return;
+    const waiting = !!pending[page];
+    el.textContent = waiting ? 'Unpublished changes' : 'Published — up to date';
+    el.classList.toggle('waiting', waiting);
+  });
+}
+
+function setPageMsg(page, text, kind) {
+  const el = pageStateEl(page);
+  if (!el) return;
+  el.textContent = text;
+  el.classList.remove('waiting', 'ok', 'err');
+  if (kind) el.classList.add(kind);
+  // Say what happened, then go back to reporting the page's standing state.
+  setTimeout(renderPending, 2600);
+}
+
+async function save(page = 'all') {
   const saveMsg = $('saveMsg');
-  saveMsg.className = '';
-  saveMsg.textContent = 'Saving…';
+  const global = page === 'all';
+  if (global) { saveMsg.className = ''; saveMsg.textContent = 'Saving…'; }
+  else setPageMsg(page, 'Saving…');
+  try {
+    const res = await api('/api/content', {
+      method: 'PUT',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ page, content: collect() }),
+    });
+    pending = res.pending || pending;
+    if (global) {
+      saveMsg.textContent = 'Saved ✓ — publish a page to put it on the website';
+      saveMsg.classList.add('ok');
+      setTimeout(() => { saveMsg.textContent = ''; saveMsg.className = ''; }, 3500);
+      renderPending();
+    } else {
+      setPageMsg(page, 'Saved ✓ — not on the website yet', 'ok');
+    }
+  } catch (err) {
+    if (global) { saveMsg.textContent = err.message; saveMsg.classList.add('err'); }
+    else setPageMsg(page, err.message, 'err');
+  }
+}
+
+// Publish saves first: what is on screen is what the user means to publish,
+// and a page published from a stale draft would be a nasty surprise.
+async function publish(page) {
+  if (!confirm(`Put the current ${PAGE_LABELS[page] || 'page'} on the website now?`)) return;
+  setPageMsg(page, 'Publishing…');
   try {
     await api('/api/content', {
       method: 'PUT',
       headers: authHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify(collect()),
+      body: JSON.stringify({ page, content: collect() }),
     });
-    saveMsg.textContent = 'All changes saved ✓';
-    saveMsg.classList.add('ok');
-    setTimeout(() => { saveMsg.textContent = ''; saveMsg.className = ''; }, 2500);
+    const res = await api('/api/content/publish', {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ page }),
+    });
+    pending = res.pending || pending;
+    setPageMsg(page, 'Published ✓ — it is on the website', 'ok');
   } catch (err) {
-    saveMsg.textContent = err.message;
-    saveMsg.classList.add('err');
+    setPageMsg(page, err.message, 'err');
   }
 }
-$('saveBtn').addEventListener('click', save);
-$('saveBtn2').addEventListener('click', save);
-$('saveBtnMobile').addEventListener('click', save);
+
+document.querySelectorAll('[data-save-page]').forEach((b) =>
+  b.addEventListener('click', () => save(b.dataset.savePage))
+);
+document.querySelectorAll('[data-publish-page]').forEach((b) =>
+  b.addEventListener('click', () => publish(b.dataset.publishPage))
+);
+
+$('saveBtn').addEventListener('click', () => save('all'));
+$('saveBtn2').addEventListener('click', () => save('all'));
+$('saveBtnMobile').addEventListener('click', () => save('all'));
+
+/* ---------- page history ---------- */
+const historyModal = $('historyModal');
+
+const ACTION_WORDS = { save: 'Saved', publish: 'Published', restore: 'Restored' };
+
+function formatWhen(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString(undefined, {
+    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function closeHistory() { historyModal.hidden = true; }
+$('historyClose').addEventListener('click', closeHistory);
+historyModal.addEventListener('click', (e) => { if (e.target === historyModal) closeHistory(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !historyModal.hidden) closeHistory();
+});
+
+async function openHistory(page) {
+  $('historyPageName').textContent = PAGE_LABELS[page] || page;
+  $('historyError').textContent = '';
+  $('historyOk').textContent = '';
+  $('historyList').innerHTML = '<li class="history-empty">Loading…</li>';
+  historyModal.hidden = false;
+  try {
+    const { versions } = await api(`/api/content/versions?page=${encodeURIComponent(page)}`, {
+      headers: authHeaders(),
+    });
+    renderHistory(versions || [], page);
+  } catch (err) {
+    $('historyList').innerHTML = '';
+    $('historyError').textContent = err.message;
+  }
+}
+
+function renderHistory(versions, page) {
+  const list = $('historyList');
+  list.innerHTML = '';
+  if (!versions.length) {
+    list.innerHTML = '<li class="history-empty">Nothing saved for this page yet.</li>';
+    return;
+  }
+  versions.forEach((v) => {
+    const li = document.createElement('li');
+    li.className = 'history-row';
+
+    const head = document.createElement('div');
+    head.className = 'history-head';
+
+    const when = document.createElement('span');
+    when.className = 'history-when';
+    when.textContent = formatWhen(v.created_at);
+    head.appendChild(when);
+
+    const what = document.createElement('span');
+    what.className = `history-action ${v.action}`;
+    what.textContent = ACTION_WORDS[v.action] || v.action;
+    head.appendChild(what);
+
+    // A whole-site save covers this page as well; saying so explains why an
+    // entry nobody made on this panel is sitting in its history.
+    if (v.page === 'all') {
+      const scope = document.createElement('span');
+      scope.className = 'history-scope';
+      scope.textContent = 'all pages';
+      head.appendChild(scope);
+    }
+
+    if (v.author) {
+      const who = document.createElement('span');
+      who.className = 'history-who';
+      who.textContent = v.author;
+      head.appendChild(who);
+    }
+
+    const actions = document.createElement('span');
+    actions.className = 'history-actions';
+    const viewBtn = document.createElement('button');
+    viewBtn.type = 'button';
+    viewBtn.className = 'btn ghost small';
+    viewBtn.textContent = 'View';
+    const restoreBtn = document.createElement('button');
+    restoreBtn.type = 'button';
+    restoreBtn.className = 'btn ghost small';
+    restoreBtn.textContent = 'Restore';
+    actions.appendChild(viewBtn);
+    actions.appendChild(restoreBtn);
+    head.appendChild(actions);
+    li.appendChild(head);
+
+    // The saved wording is fetched only when asked for — the list would be a
+    // heavy payload if every version carried its whole snapshot.
+    const body = document.createElement('pre');
+    body.className = 'history-body';
+    body.hidden = true;
+    li.appendChild(body);
+
+    viewBtn.addEventListener('click', async () => {
+      if (!body.hidden) { body.hidden = true; viewBtn.textContent = 'View'; return; }
+      viewBtn.disabled = true;
+      try {
+        const { slice } = await api(
+          `/api/content/versions/${v.id}?page=${encodeURIComponent(page)}`,
+          { headers: authHeaders() }
+        );
+        body.textContent = JSON.stringify(slice, null, 2);
+        body.hidden = false;
+        viewBtn.textContent = 'Hide';
+      } catch (err) {
+        $('historyError').textContent = err.message;
+      } finally {
+        viewBtn.disabled = false;
+      }
+    });
+
+    restoreBtn.addEventListener('click', async () => {
+      const label = `${ACTION_WORDS[v.action] || v.action} ${formatWhen(v.created_at)}`;
+      if (!confirm(`Bring back this version (${label})?\n\nIt replaces what you have now for this page, as unpublished work — the website only changes when you press Publish.`)) return;
+      restoreBtn.disabled = true;
+      $('historyError').textContent = '';
+      try {
+        const res = await api(`/api/content/versions/${v.id}/restore`, {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ page }),
+        });
+        content = res.content;
+        pending = res.pending || pending;
+        populate();
+        renderPending();
+        $('historyOk').textContent = 'Restored. Close this and press Publish when you are happy with it.';
+      } catch (err) {
+        $('historyError').textContent = err.message;
+      } finally {
+        restoreBtn.disabled = false;
+      }
+    });
+
+    list.appendChild(li);
+  });
+}
+
+document.querySelectorAll('[data-history-page]').forEach((b) =>
+  b.addEventListener('click', () => openHistory(b.dataset.historyPage))
+);
 
 /* ---------- sidebar drawer (mobile) + active nav ---------- */
 const sidebar = $('sidebar');
@@ -878,8 +1102,13 @@ $('confirmResetBtn').addEventListener('click', async () => {
 /* ---------- boot ---------- */
 async function enterDashboard() {
   currentUser = await api('/api/account', { headers: authHeaders() }); // verifies token
-  content = await api('/api/content', { cache: 'no-store' });
+  // The dashboard edits the draft, not the live site, and is told which pages
+  // are waiting to be published.
+  const state = await api('/api/content/draft', { headers: authHeaders(), cache: 'no-store' });
+  content = state.content;
+  pending = state.pending || {};
   populate();
+  renderPending();
   $('whoami').textContent = currentUser.email;
   await loadUsers();
   await loadMessages();

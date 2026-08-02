@@ -274,10 +274,44 @@ function renderProjects(projects) {
   });
 }
 
+// ?preview=1 asks for the dashboard's unpublished draft. The API only hands it
+// to a signed-in admin and marks the response, so the same link opened by a
+// visitor quietly shows the published site instead.
+const PREVIEW = new URLSearchParams(location.search).get('preview') === '1';
+
+// The banner is the only thing that says "this is not what visitors see", so it
+// goes up before anything else and only on a response the server confirmed.
+function showPreviewBanner() {
+  if (document.getElementById('previewBanner')) return;
+  const bar = document.createElement('div');
+  bar.id = 'previewBanner';
+  bar.className = 'preview-banner';
+  bar.textContent = 'Preview — unpublished changes. Visitors still see the published site.';
+  document.body.appendChild(bar);
+  document.body.classList.add('has-preview-banner');
+}
+
+// Keep the preview across the site's own links, so moving from one page to the
+// next does not silently drop back to the published version.
+function keepPreviewOnLinks() {
+  document.querySelectorAll('a[href^="/"]').forEach((a) => {
+    const url = new URL(a.getAttribute('href'), location.origin);
+    if (url.searchParams.get('preview') === '1') return;
+    url.searchParams.set('preview', '1');
+    a.setAttribute('href', url.pathname + url.search + url.hash);
+  });
+}
+
 async function loadContent() {
   try {
-    const res = await fetch('/api/content', { cache: 'no-store' });
-    if (res.ok) hydrate(await res.json());
+    const res = await fetch(PREVIEW ? '/api/content?preview=1' : '/api/content', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+    });
+    if (!res.ok) return;
+    const isPreview = res.headers.get('x-preview') === '1';
+    hydrate(await res.json());
+    if (isPreview) { showPreviewBanner(); keepPreviewOnLinks(); }
   } catch (_) {
     /* If served statically without the API, the default markup stays visible. */
   }

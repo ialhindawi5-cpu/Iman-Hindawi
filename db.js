@@ -59,6 +59,23 @@ async function doInit() {
     expires bigint NOT NULL,
     attempts int NOT NULL DEFAULT 0
   )`;
+  // The website serves `data` (the published site). `draft` holds work in
+  // progress — Save writes it, Publish copies a page's part of it into `data`.
+  // NULL means "no draft yet", which reads as a copy of what is published.
+  await sql`ALTER TABLE content ADD COLUMN IF NOT EXISTS draft jsonb`;
+  // One row per Save/Publish/Restore, holding the whole document as it stood
+  // after the action, so any past state of a page can be put back.
+  await sql`CREATE TABLE IF NOT EXISTS content_versions (
+    id uuid PRIMARY KEY,
+    page text NOT NULL,
+    action text NOT NULL,
+    label text,
+    author text,
+    data jsonb NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now()
+  )`;
+  await sql`CREATE INDEX IF NOT EXISTS content_versions_page_ts
+            ON content_versions (page, created_at DESC)`;
   // token_version invalidates old JWTs when a password changes.
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version int NOT NULL DEFAULT 0`;
   // Rate-limit events (brute-force protection), shared across serverless instances.

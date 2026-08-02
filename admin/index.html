@@ -79,7 +79,8 @@
       </nav>
 
       <div class="side-actions">
-        <button class="btn primary full" id="saveBtn">Save changes</button>
+        <button class="btn primary full" id="saveBtn">Save all changes</button>
+        <a href="/?preview=1" target="_blank" class="btn ghost full">Preview draft ↗</a>
         <a href="/" target="_blank" class="btn ghost full">View site ↗</a>
         <button class="btn ghost full" id="logoutBtn">Log out</button>
       </div>
@@ -103,6 +104,13 @@
           <h2>Name &amp; intro</h2>
           <p class="panel-hint">Your name is the wordmark on every page and the title in the browser tab. The tagline sits under it in the footer. The intro paragraph opens the <a href="/projects" target="_blank" rel="noopener">Project Management page</a>.</p>
 
+          <div class="page-bar" data-page-bar="nameintro">
+            <button type="button" class="btn ghost" data-save-page="nameintro">Save</button>
+            <button type="button" class="btn primary" data-publish-page="nameintro">Publish</button>
+            <button type="button" class="btn ghost small" data-history-page="nameintro">History</button>
+            <span class="page-state" data-page-state="nameintro"></span>
+          </div>
+
           <h3 class="panel-sub">Name</h3>
           <div class="grid-2">
             <label>Tagline<input data-path="hero.tagline" /></label>
@@ -118,6 +126,13 @@
         <section class="panel" id="panel-actress" data-section="actress">
           <h2 data-caption-card="0">Projects</h2>
           <p class="panel-hint">The <a href="/projects" target="_blank" rel="noopener">Project Management page</a>, and the first panel on the home page.</p>
+
+          <div class="page-bar" data-page-bar="projects">
+            <button type="button" class="btn ghost" data-save-page="projects">Save</button>
+            <button type="button" class="btn primary" data-publish-page="projects">Publish</button>
+            <button type="button" class="btn ghost small" data-history-page="projects">History</button>
+            <span class="page-state" data-page-state="projects"></span>
+          </div>
           <div class="section-grid">
             <div class="media-col">
               <div class="img-preview" data-preview="actress"><span>No image</span></div>
@@ -140,6 +155,13 @@
         <section class="panel" id="panel-entrepreneur" data-section="entrepreneur">
           <h2 data-caption-card="1">Data</h2>
           <p class="panel-hint">The <a href="/data" target="_blank" rel="noopener">Data Analytics page</a>, and the second panel on the home page.</p>
+
+          <div class="page-bar" data-page-bar="data">
+            <button type="button" class="btn ghost" data-save-page="data">Save</button>
+            <button type="button" class="btn primary" data-publish-page="data">Publish</button>
+            <button type="button" class="btn ghost small" data-history-page="data">History</button>
+            <span class="page-state" data-page-state="data"></span>
+          </div>
           <div class="section-grid">
             <div class="media-col">
               <div class="img-preview" data-preview="entrepreneur"><span>No image</span></div>
@@ -162,6 +184,13 @@
         <section class="panel" id="panel-philanthropist" data-section="philanthropist">
           <h2 data-caption-card="2">Web</h2>
           <p class="panel-hint">The <a href="/web" target="_blank" rel="noopener">Web Projects page</a>, and the third panel on the home page.</p>
+
+          <div class="page-bar" data-page-bar="web">
+            <button type="button" class="btn ghost" data-save-page="web">Save</button>
+            <button type="button" class="btn primary" data-publish-page="web">Publish</button>
+            <button type="button" class="btn ghost small" data-history-page="web">History</button>
+            <span class="page-state" data-page-state="web"></span>
+          </div>
           <div class="section-grid">
             <div class="media-col">
               <div class="img-preview" data-preview="philanthropist"><span>No image</span></div>
@@ -182,7 +211,7 @@
 
           <div class="projects-editor">
             <h3>Live projects</h3>
-            <p class="panel-hint">Paste a project's link and click Add — its screenshot and title are captured automatically. Projects appear as a grid of screenshots behind the <strong>Live projects</strong> button on the Web page, in the order listed here. Remember to <strong>Save changes</strong> to publish.</p>
+            <p class="panel-hint">Paste a project's link and click Add — its screenshot and title are captured automatically. Projects appear as a grid of screenshots behind the <strong>Live projects</strong> button on the Web page, in the order listed here. <strong>Save</strong> keeps the list, <strong>Publish</strong> puts it on the website.</p>
             <div class="projects-list" id="projectsList"></div>
             <div class="project-add">
               <input type="url" id="newProjectUrl" placeholder="https://your-project.com" />
@@ -196,6 +225,13 @@
         <section class="panel" id="panel-contact">
           <h2>Contact page</h2>
           <p class="panel-hint">The text shown in your website's contact section. Your email, phone and Instagram are under <strong>Settings → Contact info</strong>.</p>
+
+          <div class="page-bar" data-page-bar="contact">
+            <button type="button" class="btn ghost" data-save-page="contact">Save</button>
+            <button type="button" class="btn primary" data-publish-page="contact">Publish</button>
+            <button type="button" class="btn ghost small" data-history-page="contact">History</button>
+            <span class="page-state" data-page-state="contact"></span>
+          </div>
           <div class="grid-2">
             <label>Eyebrow<input data-path="contact.eyebrow" /></label>
             <label>Heading<input data-path="contact.heading" /></label>
@@ -208,6 +244,13 @@
           <h2>Home page</h2>
           <p class="panel-hint">The page visitors land on at your web address — your name over three picture panels. The name and its font come from <strong>Settings → Logo</strong>; the circles under the panels come from <strong>Settings → Contact info</strong>.</p>
           <p class="panel-hint">Each <strong>caption</strong> is what its section is called everywhere: on the panel, in the website's menu, and in the sidebar here.</p>
+
+          <div class="page-bar" data-page-bar="home">
+            <button type="button" class="btn ghost" data-save-page="home">Save</button>
+            <button type="button" class="btn primary" data-publish-page="home">Publish</button>
+            <button type="button" class="btn ghost small" data-history-page="home">History</button>
+            <span class="page-state" data-page-state="home"></span>
+          </div>
 
           <div class="landing-cards-editor">
             <div class="landing-card-editor">
@@ -265,7 +308,7 @@
               </div>
             </div>
           </div>
-          <p class="panel-hint">Pictures go live as soon as they finish uploading. Captions and links go live on <strong>Save changes</strong>.</p>
+          <p class="panel-hint">An uploaded picture is kept with the rest of your unsaved work. <strong>Save</strong> stores it, <strong>Publish</strong> puts it on the website.</p>
         </section>
 
         <!-- Settings — the three things that are not a page: contact details,
@@ -273,6 +316,13 @@
         <section class="panel" id="panel-settings">
           <h2>Settings</h2>
           <p class="panel-hint">Your contact details, how your name appears on the site, and who can sign in to this dashboard.</p>
+
+          <div class="page-bar" data-page-bar="settings">
+            <button type="button" class="btn ghost" data-save-page="settings">Save</button>
+            <button type="button" class="btn primary" data-publish-page="settings">Publish</button>
+            <button type="button" class="btn ghost small" data-history-page="settings">History</button>
+            <span class="page-state" data-page-state="settings"></span>
+          </div>
 
           <div class="settings-tabs" role="tablist">
             <button type="button" class="settings-tab-btn" role="tab" id="settingsTab-contactinfo" data-settings-tab="contactinfo">Contact info</button>
@@ -292,7 +342,7 @@
           </div>
 
           <div class="settings-tab" role="tabpanel" aria-labelledby="settingsTab-logo" data-settings-panel="logo" hidden>
-            <p class="panel-hint">What appears in the site header and footer: your name set as text, or an uploaded logo image. Changes go live when you press <strong>Save changes</strong>.</p>
+            <p class="panel-hint">What appears in the site header and footer: your name set as text, or an uploaded logo image. Changes reach the website when you press <strong>Publish</strong>.</p>
 
             <label>Show as
               <select data-path="brand.mode" id="brandMode">
@@ -351,9 +401,21 @@
 
       <div class="save-bar" id="saveBar">
         <span id="saveMsg"></span>
-        <button class="btn primary" id="saveBtn2">Save changes</button>
+        <button class="btn primary" id="saveBtn2">Save all changes</button>
       </div>
     </main>
+  </div>
+
+  <!-- Page history -->
+  <div class="modal-overlay" id="historyModal" hidden>
+    <div class="modal modal-wide">
+      <button class="modal-close" id="historyClose" aria-label="Close">×</button>
+      <h2>History — <span id="historyPageName"></span></h2>
+      <p class="panel-hint">Every save and publish for this page, newest first. <strong>Restore</strong> brings that wording back as unpublished work — look it over, then press Publish on the page itself.</p>
+      <ul class="history-list" id="historyList"></ul>
+      <span class="form-error" id="historyError"></span>
+      <span class="form-ok" id="historyOk"></span>
+    </div>
   </div>
 
   <!-- Reset password modal -->
