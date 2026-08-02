@@ -616,9 +616,18 @@ sidebarOverlay.addEventListener('click', closeDrawer);
 const navLinks = Array.from(document.querySelectorAll('.side-nav a'));
 const panels = Array.from(document.querySelectorAll('.dash-body .panel'));
 const DEFAULT_PANEL = 'panel-messages';
+// Contact info, the logo and the admin users used to be three panels of their
+// own; they are subheadings of Settings now, so an old bookmark still lands on
+// them rather than dropping into Messages.
+const PANEL_ALIASES = {
+  'panel-contactinfo': 'panel-settings',
+  'panel-logo': 'panel-settings',
+  'panel-users': 'panel-settings',
+};
 
 function showPanel(id) {
-  const target = panels.some((p) => p.id === id) ? id : DEFAULT_PANEL;
+  const wanted = PANEL_ALIASES[id] || id;
+  const target = panels.some((p) => p.id === wanted) ? wanted : DEFAULT_PANEL;
   panels.forEach((p) => { p.hidden = p.id !== target; });
   navLinks.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === `#${target}`));
   if (location.hash !== `#${target}`) history.replaceState(null, '', `#${target}`);

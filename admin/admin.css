@@ -449,6 +449,13 @@ select:focus {
   .project-actions { justify-content: flex-start; }
 }
 
+/* Separates a standalone entry (Settings) from the group above it, which
+   would otherwise read as one more page. */
+.side-nav .side-rule {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 0.9rem 0.85rem 0.55rem;
+}
 /* Sidebar group headings */
 .side-nav .side-group {
   font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase;

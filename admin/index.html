@@ -74,10 +74,8 @@
         <a href="#panel-contact">Contact</a>
         <a href="#panel-home">Name &amp; intro</a>
 
-        <span class="side-group">Settings</span>
-        <a href="#panel-contactinfo">Contact info</a>
-        <a href="#panel-users">Admin Users</a>
-        <a href="#panel-logo">Logo</a>
+        <hr class="side-rule" />
+        <a href="#panel-settings">Settings</a>
       </nav>
 
       <div class="side-actions">
@@ -205,17 +203,6 @@
           <label>Sub text<input data-path="contact.sub" /></label>
         </section>
 
-        <!-- Settings · Contact info -->
-        <section class="panel" id="panel-contactinfo">
-          <h2>Contact info</h2>
-          <p class="panel-hint">Your public contact details — shown in the site footer and contact section.</p>
-          <label>Email<input data-path="contact.email" /></label>
-          <label>Social &amp; contact links (one per line — <em>Label | URL</em>)
-            <textarea rows="4" data-socials="contact.socials"></textarea>
-            <small class="field-note">The <strong>Label</strong> is the text shown next to the icon (e.g. your Instagram handle <em>eman_s.hindawi</em>, or your phone number); the <strong>URL</strong> is where it links. Examples:<br /><code>eman_s.hindawi | https://www.instagram.com/eman_s.hindawi/</code><br /><code>+961 76 934 110 | tel:+96176934110</code></small>
-          </label>
-        </section>
-
         <!-- Alternate landing page -->
         <section class="panel" id="panel-landing">
           <h2>Home page</h2>
@@ -281,9 +268,21 @@
           <p class="panel-hint">Pictures go live as soon as they finish uploading. Captions and links go live on <strong>Save changes</strong>.</p>
         </section>
 
-        <!-- Settings · Logo -->
-        <section class="panel" id="panel-logo">
-          <h2>Logo</h2>
+        <!-- Settings — the three things that are not a page: contact details,
+             the wordmark, and who can sign in here. -->
+        <section class="panel" id="panel-settings">
+          <h2>Settings</h2>
+          <p class="panel-hint">Your contact details, how your name appears on the site, and who can sign in to this dashboard.</p>
+
+          <h3 class="panel-sub">Contact info</h3>
+          <p class="panel-hint">Your public contact details — shown in the site footer and contact section.</p>
+          <label>Email<input data-path="contact.email" /></label>
+          <label>Social &amp; contact links (one per line — <em>Label | URL</em>)
+            <textarea rows="4" data-socials="contact.socials"></textarea>
+            <small class="field-note">The <strong>Label</strong> is the text shown next to the icon (e.g. your Instagram handle <em>eman_s.hindawi</em>, or your phone number); the <strong>URL</strong> is where it links. Examples:<br /><code>eman_s.hindawi | https://www.instagram.com/eman_s.hindawi/</code><br /><code>+961 76 934 110 | tel:+96176934110</code></small>
+          </label>
+
+          <h3 class="panel-sub">Logo</h3>
           <p class="panel-hint">What appears in the site header and footer: your name set as text, or an uploaded logo image. Changes go live when you press <strong>Save changes</strong>.</p>
 
           <label>Show as
@@ -320,11 +319,8 @@
             </div>
             <p class="panel-hint">A PNG with a transparent background works best, cropped tight to the artwork — empty space inside the file makes the logo look smaller than it is.</p>
           </div>
-        </section>
 
-        <!-- Admin users -->
-        <section class="panel" id="panel-users">
-          <h2>Admin Users</h2>
+          <h3 class="panel-sub">Admin Users</h3>
           <p class="panel-hint">People who can sign in and edit this website.</p>
           <ul class="user-list" id="userList"></ul>
           <form class="add-user" id="addUserForm">
