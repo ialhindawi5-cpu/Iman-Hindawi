@@ -449,6 +449,33 @@ select:focus {
   .project-actions { justify-content: flex-start; }
 }
 
+/* Settings tabs — the three parts of the panel, one at a time */
+.settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 1.4rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--line);
+}
+.settings-tab-btn {
+  padding: 0.5rem 1.05rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink-soft);
+  font-weight: 500;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.settings-tab-btn:hover { background: #fae7ee; color: var(--ink); }
+.settings-tab-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
 /* Separates a standalone entry (Settings) from the group above it, which
    would otherwise read as one more page. */
 .side-nav .side-rule {

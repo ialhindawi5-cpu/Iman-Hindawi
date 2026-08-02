@@ -610,6 +610,28 @@ hamburger.addEventListener('click', () =>
 );
 sidebarOverlay.addEventListener('click', closeDrawer);
 
+/* ---------- Settings tabs ---------- */
+// Three buttons at the top of the Settings panel; the two blocks not chosen are
+// hidden, not removed, so collect() still saves their fields.
+const settingsTabBtns = Array.from(document.querySelectorAll('[data-settings-tab]'));
+const settingsTabs = Array.from(document.querySelectorAll('[data-settings-panel]'));
+const DEFAULT_SETTINGS_TAB = 'contactinfo';
+
+function showSettingsTab(name) {
+  const target = settingsTabs.some((t) => t.dataset.settingsPanel === name) ? name : DEFAULT_SETTINGS_TAB;
+  settingsTabs.forEach((t) => { t.hidden = t.dataset.settingsPanel !== target; });
+  settingsTabBtns.forEach((b) => {
+    const on = b.dataset.settingsTab === target;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+}
+
+settingsTabBtns.forEach((b) =>
+  b.addEventListener('click', () => showSettingsTab(b.dataset.settingsTab))
+);
+showSettingsTab(DEFAULT_SETTINGS_TAB);
+
 /* ---------- panel routing — one section on screen at a time ---------- */
 // Hidden panels stay in the DOM, so collect() still gathers every field and
 // Save changes keeps saving the whole site, not just the visible section.
@@ -620,13 +642,15 @@ const DEFAULT_PANEL = 'panel-messages';
 // own; they are subheadings of Settings now, so an old bookmark still lands on
 // them rather than dropping into Messages.
 const PANEL_ALIASES = {
-  'panel-contactinfo': 'panel-settings',
-  'panel-logo': 'panel-settings',
-  'panel-users': 'panel-settings',
+  'panel-contactinfo': { panel: 'panel-settings', tab: 'contactinfo' },
+  'panel-logo': { panel: 'panel-settings', tab: 'logo' },
+  'panel-users': { panel: 'panel-settings', tab: 'users' },
 };
 
 function showPanel(id) {
-  const wanted = PANEL_ALIASES[id] || id;
+  const alias = PANEL_ALIASES[id];
+  if (alias) showSettingsTab(alias.tab);
+  const wanted = alias ? alias.panel : id;
   const target = panels.some((p) => p.id === wanted) ? wanted : DEFAULT_PANEL;
   panels.forEach((p) => { p.hidden = p.id !== target; });
   navLinks.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === `#${target}`));

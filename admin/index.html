@@ -274,66 +274,77 @@
           <h2>Settings</h2>
           <p class="panel-hint">Your contact details, how your name appears on the site, and who can sign in to this dashboard.</p>
 
-          <h3 class="panel-sub">Contact info</h3>
-          <p class="panel-hint">Your public contact details — shown in the site footer and contact section.</p>
-          <label>Email<input data-path="contact.email" /></label>
-          <label>Social &amp; contact links (one per line — <em>Label | URL</em>)
-            <textarea rows="4" data-socials="contact.socials"></textarea>
-            <small class="field-note">The <strong>Label</strong> is the text shown next to the icon (e.g. your Instagram handle <em>eman_s.hindawi</em>, or your phone number); the <strong>URL</strong> is where it links. Examples:<br /><code>eman_s.hindawi | https://www.instagram.com/eman_s.hindawi/</code><br /><code>+961 76 934 110 | tel:+96176934110</code></small>
-          </label>
+          <div class="settings-tabs" role="tablist">
+            <button type="button" class="settings-tab-btn" role="tab" id="settingsTab-contactinfo" data-settings-tab="contactinfo">Contact info</button>
+            <button type="button" class="settings-tab-btn" role="tab" id="settingsTab-logo" data-settings-tab="logo">Logo</button>
+            <button type="button" class="settings-tab-btn" role="tab" id="settingsTab-users" data-settings-tab="users">Admin Users</button>
+          </div>
 
-          <h3 class="panel-sub">Logo</h3>
-          <p class="panel-hint">What appears in the site header and footer: your name set as text, or an uploaded logo image. Changes go live when you press <strong>Save changes</strong>.</p>
+          <!-- One tab on screen at a time. The other two stay in the DOM, only
+               hidden, so Save changes still gathers every field on this panel. -->
+          <div class="settings-tab" role="tabpanel" aria-labelledby="settingsTab-contactinfo" data-settings-panel="contactinfo">
+            <p class="panel-hint">Your public contact details — shown in the site footer and contact section.</p>
+            <label>Email<input data-path="contact.email" /></label>
+            <label>Social &amp; contact links (one per line — <em>Label | URL</em>)
+              <textarea rows="4" data-socials="contact.socials"></textarea>
+              <small class="field-note">The <strong>Label</strong> is the text shown next to the icon (e.g. your Instagram handle <em>eman_s.hindawi</em>, or your phone number); the <strong>URL</strong> is where it links. Examples:<br /><code>eman_s.hindawi | https://www.instagram.com/eman_s.hindawi/</code><br /><code>+961 76 934 110 | tel:+96176934110</code></small>
+            </label>
+          </div>
 
-          <label>Show as
-            <select data-path="brand.mode" id="brandMode">
-              <option value="text">Text (your name)</option>
-              <option value="image">Uploaded logo image</option>
-            </select>
-          </label>
+          <div class="settings-tab" role="tabpanel" aria-labelledby="settingsTab-logo" data-settings-panel="logo" hidden>
+            <p class="panel-hint">What appears in the site header and footer: your name set as text, or an uploaded logo image. Changes go live when you press <strong>Save changes</strong>.</p>
 
-          <div id="brandTextBlock">
-            <label>Logo text<input data-path="brand.text" id="brandText" placeholder="Iman Al Hindawi" /></label>
-            <div class="font-toolbar">
-              <label>Font<select data-path="brand.font" id="brandFont"></select></label>
-              <label>Header size<select data-path="brand.size" id="brandSize"></select></label>
-              <label>Footer size<select data-path="brand.footerSize" id="brandFooterSize"></select></label>
+            <label>Show as
+              <select data-path="brand.mode" id="brandMode">
+                <option value="text">Text (your name)</option>
+                <option value="image">Uploaded logo image</option>
+              </select>
+            </label>
+
+            <div id="brandTextBlock">
+              <label>Logo text<input data-path="brand.text" id="brandText" placeholder="Iman Al Hindawi" /></label>
+              <div class="font-toolbar">
+                <label>Font<select data-path="brand.font" id="brandFont"></select></label>
+                <label>Header size<select data-path="brand.size" id="brandSize"></select></label>
+                <label>Footer size<select data-path="brand.footerSize" id="brandFooterSize"></select></label>
+              </div>
+              <span class="field-note">Leave the text empty to use the name from <strong>Home → Hero</strong>. Sizes shrink automatically on phones so the wordmark never runs off the screen.</span>
+              <div class="brand-preview">
+                <span class="brand-preview-label">Header</span>
+                <span class="brand-preview-mark" id="brandPreviewHeader"></span>
+                <span class="brand-preview-label">Footer</span>
+                <span class="brand-preview-mark dark" id="brandPreviewFooter"></span>
+              </div>
             </div>
-            <span class="field-note">Leave the text empty to use the name from <strong>Home → Hero</strong>. Sizes shrink automatically on phones so the wordmark never runs off the screen.</span>
-            <div class="brand-preview">
-              <span class="brand-preview-label">Header</span>
-              <span class="brand-preview-mark" id="brandPreviewHeader"></span>
-              <span class="brand-preview-label">Footer</span>
-              <span class="brand-preview-mark dark" id="brandPreviewFooter"></span>
+
+            <div class="section-grid" id="brandImageBlock" hidden>
+              <div class="media-col">
+                <div class="img-preview logo-preview" data-preview="logo"><span>No logo</span></div>
+                <label class="upload-btn">Upload logo
+                  <input type="file" accept="image/*" data-upload="logo" hidden />
+                </label>
+                <button type="button" class="btn ghost remove-btn" data-remove="logo" hidden>Remove logo</button>
+                <small class="upload-status" data-status="logo"></small>
+              </div>
+              <p class="panel-hint">A PNG with a transparent background works best, cropped tight to the artwork — empty space inside the file makes the logo look smaller than it is.</p>
             </div>
           </div>
 
-          <div class="section-grid" id="brandImageBlock" hidden>
-            <div class="media-col">
-              <div class="img-preview logo-preview" data-preview="logo"><span>No logo</span></div>
-              <label class="upload-btn">Upload logo
-                <input type="file" accept="image/*" data-upload="logo" hidden />
-              </label>
-              <button type="button" class="btn ghost remove-btn" data-remove="logo" hidden>Remove logo</button>
-              <small class="upload-status" data-status="logo"></small>
+          <div class="settings-tab" role="tabpanel" aria-labelledby="settingsTab-users" data-settings-panel="users" hidden>
+            <p class="panel-hint">People who can sign in and edit this website.</p>
+            <ul class="user-list" id="userList"></ul>
+            <form class="add-user" id="addUserForm">
+              <input type="email" id="newUserEmail" placeholder="new-admin@email.com" required />
+              <input type="password" id="newUserPassword" placeholder="Temp password (min 6 chars)" required />
+              <button type="submit" class="btn primary">Add user</button>
+            </form>
+            <span class="form-error" id="userError"></span>
+
+            <div class="account-block">
+              <h3>Your account</h3>
+              <p class="panel-hint">Change your password using a verification code sent to your email.</p>
+              <button type="button" class="btn ghost" id="resetPwBtn">Reset password</button>
             </div>
-            <p class="panel-hint">A PNG with a transparent background works best, cropped tight to the artwork — empty space inside the file makes the logo look smaller than it is.</p>
-          </div>
-
-          <h3 class="panel-sub">Admin Users</h3>
-          <p class="panel-hint">People who can sign in and edit this website.</p>
-          <ul class="user-list" id="userList"></ul>
-          <form class="add-user" id="addUserForm">
-            <input type="email" id="newUserEmail" placeholder="new-admin@email.com" required />
-            <input type="password" id="newUserPassword" placeholder="Temp password (min 6 chars)" required />
-            <button type="submit" class="btn primary">Add user</button>
-          </form>
-          <span class="form-error" id="userError"></span>
-
-          <div class="account-block">
-            <h3>Your account</h3>
-            <p class="panel-hint">Change your password using a verification code sent to your email.</p>
-            <button type="button" class="btn ghost" id="resetPwBtn">Reset password</button>
           </div>
         </section>
       </div>
