@@ -9,6 +9,11 @@
   --line: rgba(94, 18, 51, 0.16);
   --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
   --sans: "Jost", "Helvetica Neue", Arial, sans-serif;
+  /* Type that sits on a photograph. The reference uses a neutral bold grotesque
+     there, not its display face: the site's geometric sans is too light and too
+     wide-set to hold up over a picture. Shared by the home-page captions and the
+     section-page copy so the two cannot drift apart. */
+  --photo-sans: Arial, "Helvetica Neue", Helvetica, sans-serif;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -25,6 +30,18 @@ body {
 
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
+
+/* Read by a screen reader and by a crawler, drawn for nobody. The section pages
+   name themselves in the nav, as the reference does, but the heading still has
+   to exist for search and for anyone navigating by headings. */
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
 /* Draft preview (?preview=1, admins only) — along the bottom so it never sits
    over the fixed header, and unmissable while it is there. */
@@ -118,15 +135,16 @@ a { color: inherit; text-decoration: none; }
     linear-gradient(to right, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.22) 42%, rgba(0, 0, 0, 0) 72%);
   pointer-events: none;
 }
+/* Flush to the page margin, not inside a centred column: on the reference the
+   copy starts about 60px from the left edge of the window whatever its width,
+   and a 1240px container would push it into the middle of a wide screen. */
 .section-hero-inner {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 1240px;
-  margin: 0 auto;
   padding: 0 clamp(1.5rem, 5vw, 4rem) clamp(3rem, 7vw, 5.5rem);
 }
-.section-hero-copy { max-width: 46rem; }
+.section-hero-copy { max-width: 52rem; }
 .section-hero .eyebrow { color: #fff; opacity: 0.75; margin-bottom: 1.1rem; }
 .section-hero h1 {
   font-family: var(--serif);
@@ -136,46 +154,39 @@ a { color: inherit; text-decoration: none; }
   letter-spacing: -0.005em;
   margin-bottom: clamp(1.2rem, 2.5vw, 1.8rem);
 }
-/* The profile paragraph reads as the lead; the section's own copy follows it. */
-.section-lead {
-  font-family: var(--serif);
-  font-size: clamp(1.15rem, 1.9vw, 1.6rem);
-  line-height: 1.5;
-  font-weight: 300;
-  margin-bottom: 1.1rem;
+/* One paragraph, in the bold grotesque the reference sets over its pictures:
+   small, generously leaded, a touch of tracking, solid white. The old pairing —
+   a large light serif lead above a light sans body — is what made these pages
+   read as an article rather than a caption on a photograph. */
+.section-hero-copy p {
+  font-family: var(--photo-sans);
+  font-weight: 700;
+  font-size: clamp(0.9rem, 1.02vw, 1.02rem);
+  letter-spacing: 0.02em;
+  line-height: 1.95;
+  color: #fff;
 }
-.section-hero-copy p:not(.section-lead) {
-  font-size: clamp(0.95rem, 1.15vw, 1.08rem);
-  line-height: 1.9;
-  font-weight: 300;
-  color: rgba(255, 255, 255, 0.92);
-}
-.section-tags {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.6rem;
-  margin-top: 1.4rem;
-  font-size: 0.72rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.75);
-}
-/* A rule then the label, the way the reference sets its links. */
+/* The tag row is gone from these pages — the reference carries none, and the
+   caps list competed with the one paragraph it sat under. */
+
+/* A short rule then the label, in the accent pink, the way the reference sets
+   its links: title case rather than tracked-out caps, and the same bold
+   grotesque as the paragraph above it. */
 .section-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.2rem 2.4rem;
-  margin-top: clamp(1.6rem, 3vw, 2.4rem);
+  gap: 1rem 2.2rem;
+  margin-top: clamp(1.4rem, 2.6vw, 2rem);
 }
 .section-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.9rem;
-  font-size: 0.76rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  font-weight: 400;
+  gap: 0.75rem;
+  font-family: var(--photo-sans);
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+  color: var(--accent);
 }
 /* One of these links is a button — it opens the projects rather than going
    anywhere — so it has to shed the styling a button comes with. */
@@ -189,12 +200,12 @@ button.section-link {
 }
 .section-link::before {
   content: "";
-  width: 2rem;
-  height: 1px;
+  width: 1.5rem;
+  height: 2px;
   background: currentColor;
   transition: width 0.35s var(--ease);
 }
-.section-link:hover::before { width: 3rem; }
+.section-link:hover::before { width: 2.4rem; }
 
 /* Circled contact icons, for a page with no footer to carry them. Same shape as
    the row on the home page, in the site's ink rather than black. */
