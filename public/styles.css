@@ -129,10 +129,17 @@ a { color: inherit; text-decoration: none; }
   inset: 0;
   /* Two washes: up from the foot of the picture, and in from the left edge
      where the copy sits. A bright photograph (a lit screen, white paper) needs
-     both before white type is comfortable on it. */
+     both before white type is comfortable on it.
+
+     Roughly half the strength they were set at. That was tuned for a light
+     serif lead, which needs a dark ground under every thin stroke; the copy is
+     700-weight grotesque now and carries itself, so the picture is allowed to
+     stay a picture — bright and legible at once, the way the reference does it.
+     The wash at the very top is the smallest of them and exists only so the
+     white menu holds up over a bright sky. */
   background:
-    linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.52) 34%, rgba(0, 0, 0, 0.08) 68%, rgba(0, 0, 0, 0.26) 100%),
-    linear-gradient(to right, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.22) 42%, rgba(0, 0, 0, 0) 72%);
+    linear-gradient(to top, rgba(0, 0, 0, 0.58) 0%, rgba(0, 0, 0, 0.3) 34%, rgba(0, 0, 0, 0.04) 68%, rgba(0, 0, 0, 0.16) 100%),
+    linear-gradient(to right, rgba(0, 0, 0, 0.36) 0%, rgba(0, 0, 0, 0.13) 42%, rgba(0, 0, 0, 0) 72%);
   pointer-events: none;
 }
 /* Flush to the page margin, not inside a centred column: on the reference the
@@ -937,6 +944,49 @@ body.overlay-open { overflow: hidden; }
   transition: color 0.25s var(--ease);
 }
 .footer-top-link:hover { color: #fff; }
+
+/* ---------- Fade in from bottom (every page but the home page) ----------
+   The reference site's one gesture: a piece of copy fades in while rising
+   about 75px, each piece a beat behind the one above it. Its easing is a plain
+   ease-out rather than the site's usual overshoot-free `--ease`, which is
+   slower to leave and makes a long rise look like it is being lowered into
+   place instead of arriving.
+
+   Every start state below is behind `html.js-anim`, which anim.js sets from
+   the <head> before the first paint. Without that file — JavaScript off, the
+   request blocked, reduced motion asked for — the class is absent and none of
+   this applies, so no element can be left sitting at zero opacity. */
+:root { --anim-ease: cubic-bezier(0.25, 0.46, 0.45, 0.94); }
+
+html.js-anim [data-anim] {
+  opacity: 0;
+  transition: opacity 0.9s var(--anim-ease), transform 0.9s var(--anim-ease);
+  will-change: opacity, transform;
+}
+/* Shorter on a phone: 75px is most of a paragraph there, and the copy would
+   start below the fold and rise into it rather than settling on the spot. */
+html.js-anim [data-anim="up"] { transform: translateY(clamp(34px, 5.5vw, 75px)); }
+html.js-anim [data-anim="fade"] { transform: none; }
+html.js-anim [data-anim].anim-in {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+
+/* The header is faded by a keyframe rather than by the rule above, because a
+   transition declared there would outrank — and so replace — the background
+   and padding transitions the header runs when the page is scrolled. `both`
+   leaves it at full opacity whatever else happens. */
+html.js-anim .site-header { animation: header-in 0.9s var(--anim-ease) 0.15s both; }
+@keyframes header-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Only while the drift is running. The 6% zoom is the room the picture moves
+   inside, so it is added by anim.js together with the movement and never on a
+   page that does not scroll. */
+.section-hero-media.has-parallax { will-change: transform; }
 
 /* ---------- Reveal animation ---------- */
 .reveal {
