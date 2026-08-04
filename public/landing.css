@@ -26,8 +26,18 @@
   /* In a window too short for the block, plain centring hides the top of it
      above the scroll origin; `safe` gives up the centring instead. */
   justify-content: safe center;
-  padding: clamp(1.1rem, 2vw, 2.4rem) clamp(1.2rem, 4.86vw, 6rem);
-  gap: clamp(1.2rem, 2.1vw, 2.4rem);
+  /* Every ceiling below is the value the reference measures at 1440px wide, so
+     the block settles at that size instead of carrying on growing with the
+     window: 28.8px vertical padding, 70.4px side margins, 30.4px between rows. */
+  padding: clamp(1.1rem, 2vw, 1.8rem) clamp(1.2rem, 4.86vw, 4.4rem);
+  gap: clamp(1.2rem, 2.1vw, 1.9rem);
+  /* With the side margins pinned, a very wide monitor would keep stretching the
+     panels into letterboxes. Holding the block at the width the reference was
+     measured at (1745px of panels + 2 x 70px margins) keeps the 575 x 515
+     proportion instead. */
+  width: 100%;
+  max-width: 1900px;
+  margin: 0 auto;
 }
 /* The panels keep their proportions in a short window rather than being
    squeezed to fit it — the page scrolls instead. */
@@ -41,7 +51,7 @@
   text-align: center;
   font-family: var(--sans);
   font-weight: 300;
-  font-size: clamp(0.8rem, 1.22vw, 1.5rem);
+  font-size: clamp(0.8rem, 1.22vw, 1.1rem);  /* 17.6px, the reference wordmark */
   letter-spacing: 0.34em;
   text-indent: 0.34em;  /* offsets the trailing letter gap so it stays centred */
   text-transform: uppercase;
@@ -69,7 +79,7 @@
 .landing-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: clamp(0.4rem, 0.69vw, 0.9rem);
+  gap: clamp(0.4rem, 0.69vw, 0.62rem);
   align-items: stretch;
 }
 .landing-card {
@@ -80,17 +90,16 @@
   background: #f2e3ea;
   transition: transform 0.55s var(--ease), box-shadow 0.55s var(--ease);
   will-change: transform;
-}
-/* The panel's height is held open by an in-flow spacer rather than by
-   `aspect-ratio`. Everything else inside the card is absolutely positioned, so
-   a browser that sizes the auto grid row from the in-flow content instead of
-   from the ratio finds nothing there and collapses the panel to a hairline —
-   which is what happened on the phone. A percentage padding always resolves
-   against the card's own width, in every engine. 499 / 427 = 116.86%. */
-.landing-card::before {
-  content: "";
-  display: block;
-  padding-top: 116.86%;
+  /* On the reference the panel width tracks the window but the height barely
+     moves — 427 x 499 at a 1440px window, 575 x 515 at ~1885px. So the height is
+     the 499/427 = 116.86% ratio up to the point it reaches 515px, and 515px from
+     there on; left purely as a ratio it reached 672px at that second size.
+     34.63vw IS that ratio written against the viewport: the side padding is
+     4.86vw a side and the gutter 0.69vw, leaving each of the three panels
+     (100 - 9.72 - 1.38) / 3 = 29.63vw wide, and 29.63 x 1.1686 = 34.63. It has to
+     be spelled out in vw because the panel's own width is a grid track, which a
+     percentage height cannot resolve against. */
+  height: min(34.63vw, 515px);
 }
 .landing-card-media {
   position: absolute;
@@ -129,7 +138,9 @@
      section pages set their copy in the same face, hence the shared token. */
   font-family: var(--photo-sans);
   font-weight: 700;
-  font-size: clamp(0.85rem, 1.05vw, 1.3rem);
+  /* ~15px on the reference, and it stays there on a wider window like the rest
+     of the block — the old 1.3rem ceiling let it reach 20px. */
+  font-size: clamp(0.8rem, 1.05vw, 0.95rem);
   letter-spacing: 0;
   line-height: 1.25;
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.4);
@@ -154,11 +165,12 @@
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: clamp(0.8rem, 1.74vw, 2rem);
+  gap: clamp(0.8rem, 1.74vw, 1.6rem);
 }
+/* 35px circles on the reference, and they stay 35px on a wider window. */
 .landing-social {
-  width: clamp(32px, 2.43vw, 46px);
-  height: clamp(32px, 2.43vw, 46px);
+  width: clamp(32px, 2.43vw, 35px);
+  height: clamp(32px, 2.43vw, 35px);
   border-radius: 50%;
   border: 1px solid rgba(17, 17, 17, 0.22);
   display: inline-flex;
@@ -167,7 +179,7 @@
   color: #111111;
   transition: background 0.3s var(--ease), color 0.3s var(--ease), border-color 0.3s var(--ease), transform 0.3s var(--ease);
 }
-.landing-social svg { width: clamp(15px, 1vw, 21px); height: clamp(15px, 1vw, 21px); display: block; }
+.landing-social svg { width: clamp(14px, 1vw, 15px); height: clamp(14px, 1vw, 15px); display: block; }
 .landing-social:hover {
   background: #111111;
   border-color: #111111;
@@ -204,8 +216,21 @@
     gap: 5px;
   }
   /* One per row, so each panel is a portrait rather than the near-square the
-     three-across layout uses. 507 / 351 = 144.44%. */
-  .landing-card::before { padding-top: 144.44%; }
+     three-across layout uses. 507 / 351 = 144.44%. Stacked, the reference gives
+     a ratio and not a height, so the desktop 515px cap is dropped here — on a
+     700px-wide tablet it would crush a panel that wants to be ~910px tall.
+     The height is held open by an in-flow spacer rather than by `aspect-ratio`:
+     everything else in the card is absolutely positioned, so a browser that
+     sizes the grid row from in-flow content instead of from the ratio finds
+     nothing there and collapses the panel to a hairline — which is what happened
+     on the phone. A percentage padding resolves against the card's own width in
+     every engine. */
+  .landing-card { height: auto; }
+  .landing-card::before {
+    content: "";
+    display: block;
+    padding-top: 144.44%;
+  }
   .landing-card-label { font-size: 0.94rem; bottom: 12%; }
   .landing-social { width: 35px; height: 35px; }
   .landing-social svg { width: 16px; height: 16px; }
