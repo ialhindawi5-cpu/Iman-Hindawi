@@ -8,6 +8,16 @@ function setText(id, value) {
   if (el && value != null) el.textContent = value;
 }
 
+// Same rule the server applies: a same-site path or a plain http(s) address.
+// Anything else leaves the href the page was served with, so a mistyped link
+// falls back to a working button rather than a broken one.
+function setHref(id, url) {
+  const el = document.getElementById(id);
+  const s = String(url || '').trim();
+  if (!el || !s) return;
+  if (/^\/(?!\/)/.test(s) || /^https?:\/\//i.test(s)) el.href = s;
+}
+
 function setList(id, items) {
   const el = document.getElementById(id);
   if (!el || !Array.isArray(items)) return;
@@ -122,6 +132,7 @@ function hydrate(c) {
     setText(`${key}Body`, s.body);
     setList(`${key}List`, s.list);
     setText(`${key}Cta`, s.cta);
+    setHref(`${key}Cta`, s.ctaUrl);
     setMedia(`${key}Media`, s.image);
   });
 

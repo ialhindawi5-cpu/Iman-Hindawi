@@ -1263,6 +1263,18 @@ function fillAttr(html, id, attr, value) {
   const re = new RegExp(`(<[a-z0-9]+[^>]*\\sid="${id}")([^>]*>)`, 'i');
   return html.replace(re, (m, head, tail) => `${head} ${attr}="${value}"${tail}`);
 }
+// Overwrites an attribute the markup already carries, rather than adding a
+// second one. fillAttr() is fine for `style` and `hidden`, which the page never
+// ships, but a link ships an href — and a duplicate attribute is not an error in
+// HTML, it is silently resolved in favour of the first, so appending would leave
+// the admin's link doing nothing at all.
+function setAttrById(html, id, attr, value) {
+  const tagRe = new RegExp(`<[a-z0-9]+[^>]*\\sid="${id}"[^>]*>`, 'i');
+  const attrRe = new RegExp(`\\s${attr}="[^"]*"`, 'i');
+  return html.replace(tagRe, (tag) => (attrRe.test(tag)
+    ? tag.replace(attrRe, ` ${attr}="${value}"`)
+    : tag.replace(/^(<[a-z0-9]+)/i, `$1 ${attr}="${value}"`)));
+}
 // Adds one class to the element with this id, keeping the classes it ships with.
 function addClassById(html, id, cls) {
   const re = new RegExp(`<[a-z0-9]+[^>]*\\sid="${id}"[^>]*>`, 'i');
@@ -1388,6 +1400,10 @@ function renderPage(file, section, c, opts) {
     html = fillById(html, `${section}Title`, esc(s.title));
     html = fillById(html, `${section}Body`, esc(s.body));
     html = fillById(html, `${section}Cta`, esc(s.cta));
+    // Where the button goes is the admin's to choose. An empty or rejected link
+    // leaves the href the page ships with, so the button never goes dead.
+    const ctaUrl = safeHref(s.ctaUrl);
+    if (ctaUrl) html = setAttrById(html, `${section}Cta`, 'href', esc(ctaUrl));
     if (Array.isArray(s.list)) {
       html = fillById(html, `${section}List`, s.list.map((t) => `<li>${esc(t)}</li>`).join(''));
     }

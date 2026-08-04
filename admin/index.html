@@ -255,6 +255,7 @@
               <label>Body<textarea rows="4" data-path="sections.actress.body"></textarea></label>
               <label>List items (one per line)<textarea rows="3" data-list="sections.actress.list"></textarea></label>
               <label>Call-to-action text<input data-path="sections.actress.cta" /></label>
+              <label>Call-to-action link<input data-path="sections.actress.ctaUrl" placeholder="/contact or https://example.com" /></label>
             </div>
           </div>
         </section>
@@ -283,6 +284,7 @@
               <label>Body<textarea rows="4" data-path="sections.entrepreneur.body"></textarea></label>
               <label>List items (one per line)<textarea rows="3" data-list="sections.entrepreneur.list"></textarea></label>
               <label>Call-to-action text<input data-path="sections.entrepreneur.cta" /></label>
+              <label>Call-to-action link<input data-path="sections.entrepreneur.ctaUrl" placeholder="/contact or https://example.com" /></label>
             </div>
           </div>
 
@@ -320,9 +322,11 @@
             <div class="fields-col">
               <label>Title<input data-path="sections.philanthropist.title" /></label>
               <label>Body<textarea rows="4" data-path="sections.philanthropist.body"></textarea></label>
-              <!-- This page carries no tag row and no link row, so there are no
-                   list or call-to-action fields here; the saved text stays in
-                   the database untouched. -->
+              <!-- This page carries no tag row, so there is no list field; the
+                   saved list text stays in the database untouched. It does carry
+                   a button now, like the other two pages. -->
+              <label>Call-to-action text<input data-path="sections.philanthropist.cta" /></label>
+              <label>Call-to-action link<input data-path="sections.philanthropist.ctaUrl" placeholder="/contact or https://example.com" /></label>
             </div>
           </div>
 

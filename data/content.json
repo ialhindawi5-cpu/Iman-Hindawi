@@ -18,6 +18,7 @@
       "body": "From work breakdown structures to budgeting, resource allocation, and risk assessment, Iman plans, monitors, and delivers projects on time. At Areeba Fintech she coordinated IT Infrastructure projects across regions — aligning stakeholders, defining timelines and milestones, and reporting on progress.",
       "list": ["Planning, WBS & Milestones", "Risk, Budgeting & Forecasting", "MS Project · Zoho · Jira"],
       "cta": "Discuss a project",
+      "ctaUrl": "/contact",
       "image": ""
     },
     "entrepreneur": {
@@ -26,6 +27,7 @@
       "body": "Iman turns raw data into clear decisions — building interactive dashboards, cleaning and modeling data, and connecting external sources. At UNRWA she created Activity Info forms and Power BI dashboards, shaping and transforming data through Power Query.",
       "list": ["Power BI · Tableau", "Power Query & Data Modeling", "Data Cleaning & Quality"],
       "cta": "Request a dashboard",
+      "ctaUrl": "/contact",
       "image": ""
     },
     "philanthropist": {
@@ -34,6 +36,7 @@
       "body": "Beyond coordination and data, Iman designs and builds websites and web applications — from a complete exam-management platform to polished business sites for local brands. Explore a few live projects →",
       "list": [],
       "cta": "Start a project",
+      "ctaUrl": "/contact",
       "image": ""
     }
   },
