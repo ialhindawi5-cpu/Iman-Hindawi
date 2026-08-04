@@ -7,6 +7,9 @@ const fs = require('fs');
 const path = require('path');
 const { SignJWT, jwtVerify } = require('jose');
 const { sql, init } = require('./db');
+// The font catalogue the site and the dashboard use, so the wordmark drawn into
+// the HTML here is the same one the page would have drawn for itself.
+const { brandFontStack, brandFontSize, brandGoogleFont } = require('./public/brand-fonts.js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -1260,6 +1263,16 @@ function fillAttr(html, id, attr, value) {
   const re = new RegExp(`(<[a-z0-9]+[^>]*\\sid="${id}")([^>]*>)`, 'i');
   return html.replace(re, (m, head, tail) => `${head} ${attr}="${value}"${tail}`);
 }
+// Adds one class to the element with this id, keeping the classes it ships with.
+function addClassById(html, id, cls) {
+  const re = new RegExp(`<[a-z0-9]+[^>]*\\sid="${id}"[^>]*>`, 'i');
+  return html.replace(re, (tag) => {
+    if (new RegExp(`class="[^"]*\\b${cls}\\b`, 'i').test(tag)) return tag;
+    return /\sclass="/i.test(tag)
+      ? tag.replace(/\sclass="([^"]*)"/i, (m, v) => ` class="${v} ${cls}"`)
+      : tag.replace(/^(<[a-z0-9]+)/i, `$1 class="${cls}"`);
+  });
+}
 // Text pulled back out of the page is already escaped; it is decoded here so
 // that writing it into a meta tag escapes it exactly once.
 const unesc = (s) => String(s || '')
@@ -1280,18 +1293,91 @@ function renderSectionLinks(html, c) {
     });
 }
 
+// The wordmark, drawn exactly as script.js and landing.js would draw it.
+//
+// It used to be sent as bare text in the shipped-in spaced-caps style and then
+// rebuilt by the page once the content arrived, so a name the admin had given a
+// serif and a 72px size visibly grew a moment after every load. Writing the
+// finished markup — the same span, the same class, the same inline font and
+// size — means the first paint is already the last one. The page still rebuilds
+// it afterwards; it now rebuilds it identically, which nobody can see.
+function renderBrand(html, c, fullName) {
+  const cfg = c.brand || {};
+  const logo = cfg.logo || '';
+  const useLogo = cfg.mode === 'image' && !!logo;
+  const wordmark = (cfg.text || '').trim() || fullName;
+  const stack = brandFontStack(cfg.font);
+  const headerSize = brandFontSize(cfg.size);
+  const footerSize = brandFontSize(cfg.footerSize);
+
+  // The face is fetched in the head rather than by the script, so the letters
+  // arrive in the right shapes instead of being restyled a beat later.
+  const gf = brandGoogleFont(cfg.font);
+  if (gf) {
+    html = html.replace('</head>',
+      `<link id="${gf.id}" rel="stylesheet" href="${esc(gf.href)}" /></head>`);
+  }
+
+  // Same rule as applyWordmark(): the spaced uppercase treatment belongs to the
+  // untouched default, and a chosen face or size replaces it.
+  const styled = !!(stack || headerSize || footerSize);
+  const styleFor = (size) => {
+    const bits = [];
+    if (stack) bits.push(`font-family:${stack}`);
+    if (size) bits.push(`--brand-size:${size}px`);
+    return bits.length ? esc(bits.join(';')) : '';
+  };
+
+  // ---- header wordmark (every page but the home page) ----
+  if (useLogo) {
+    html = addClassById(html, 'brand', 'has-logo');
+    html = fillById(html, 'brand',
+      `<img class="brand-logo" src="${esc(logo)}" alt="${esc(fullName)}" />`);
+  } else {
+    const style = styleFor(headerSize);
+    html = fillById(html, 'brand',
+      `<span class="brand-name${styled ? ' custom' : ''}"${style ? ` style="${style}"` : ''}>`
+      + `${esc(styled ? wordmark : wordmark.toUpperCase())}</span>`);
+  }
+
+  // ---- footer name, where a page still carries one ----
+  if (useLogo) {
+    html = fillAttr(html, 'footerName', 'hidden', 'hidden');
+  } else {
+    if (styled) html = addClassById(html, 'footerName', 'custom');
+    const style = styleFor(footerSize);
+    if (style) html = fillAttr(html, 'footerName', 'style', style);
+    html = fillById(html, 'footerName', esc(styled ? wordmark : wordmark.toUpperCase()));
+  }
+
+  // ---- home page wordmark: one element, no span inside ----
+  // landing.js leaves the shipped markup alone when there is nothing to show,
+  // and reads only the header size, so this follows it on both counts.
+  if (wordmark || logo) {
+    if (useLogo) {
+      html = fillById(html, 'landingBrand',
+        `<img class="landing-brand-logo" src="${esc(logo)}" alt="${esc(fullName) || 'Home'}" />`);
+    } else {
+      const landingStyled = !!(stack || headerSize);
+      if (landingStyled) html = addClassById(html, 'landingBrand', 'custom');
+      const style = styleFor(headerSize);
+      if (style) html = fillAttr(html, 'landingBrand', 'style', style);
+      html = fillById(html, 'landingBrand',
+        esc(landingStyled ? wordmark : wordmark.toUpperCase()));
+    }
+  }
+
+  return html;
+}
+
 function renderPage(file, section, c, opts) {
   let html = pageSource(file);
   if (!c) return html;
 
   const hero = c.hero || {};
   const fullName = `${hero.firstName || ''} ${hero.lastName || ''}`.trim();
-  const brandCfg = c.brand || {};
-  const wordmark = (brandCfg.text || '').trim() || fullName;
-
   html = renderSectionLinks(html, c);
-  html = fillById(html, 'brand', esc(wordmark));
-  html = fillById(html, 'footerName', esc(fullName));
+  html = renderBrand(html, c, fullName);
   html = fillById(html, 'footerNameBottom', esc(fullName));
   html = fillById(html, 'footerTag', esc(hero.tagline));
   html = fillById(html, 'heroEyebrow', esc(hero.eyebrow));

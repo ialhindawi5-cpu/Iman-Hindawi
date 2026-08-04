@@ -70,16 +70,27 @@
     return f ? f.stack : '';
   }
 
+  // The stylesheet a chosen Google family needs, or null for the two faces the
+  // site already loads and for the system families. The id is part of the
+  // answer so the server and the page can agree on one tag: the server writes
+  // it into the head, and the page below skips it when it is already there.
+  function brandGoogleFont(name) {
+    var f = find(name);
+    if (!f || !f.google || f.preloaded) return null;
+    return {
+      id: 'gf-' + f.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase(),
+      href: 'https://fonts.googleapis.com/css2?family=' + f.google + '&display=swap',
+    };
+  }
+
   // Adds the stylesheet link for a Google family once, the first time it is used.
   function ensureBrandFont(name) {
-    var f = find(name);
-    if (!f || !f.google || f.preloaded) return;
-    var id = 'gf-' + f.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-    if (document.getElementById(id)) return;
+    var gf = brandGoogleFont(name);
+    if (!gf || document.getElementById(gf.id)) return;
     var link = document.createElement('link');
-    link.id = id;
+    link.id = gf.id;
     link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=' + f.google + '&display=swap';
+    link.href = gf.href;
     document.head.appendChild(link);
   }
 
@@ -96,4 +107,20 @@
   root.brandFontStack = brandFontStack;
   root.ensureBrandFont = ensureBrandFont;
   root.brandFontSize = brandFontSize;
-})(window);
+  root.brandGoogleFont = brandGoogleFont;
+
+  // server.js draws the wordmark into the HTML before it is sent, so it needs
+  // this same table — one catalogue for the site, the dashboard and the server,
+  // because a wordmark drawn two different ways is exactly what makes it jump.
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+      BRAND_FONTS: FONTS,
+      BRAND_FONT_SIZES: SIZES,
+      brandFontStack: brandFontStack,
+      brandFontSize: brandFontSize,
+      brandGoogleFont: brandGoogleFont,
+    };
+  }
+  // In the browser the exports land on window; under Node there is no window,
+  // and the throwaway object above keeps the assignments from failing.
+})(typeof window !== 'undefined' ? window : {});
