@@ -55,12 +55,10 @@
   width: auto;
   object-fit: contain;
 }
-/* A face or size chosen in the admin replaces the spaced-caps treatment. */
+/* A face or size chosen in the admin changes the face and the size — the spaced
+   light caps stay, because that treatment is the wordmark. */
 .landing-brand.custom {
   font-size: var(--brand-size, clamp(1.3rem, 3vw, 2.4rem));
-  letter-spacing: 0.05em;
-  text-indent: 0;
-  text-transform: none;
 }
 
 /* ---------- Cards ----------
@@ -194,6 +192,11 @@
     letter-spacing: 0.3em;
     text-indent: 0.3em;
   }
+  /* A size picked for the desktop header is the wrong instruction on a phone,
+     where the wordmark is meant to span about four fifths of the screen. The
+     viewport sizing wins here — otherwise the .custom rule's specificity would
+     pin an 18px desktop wordmark to the middle of a 390px screen. */
+  .landing-brand.custom { font-size: clamp(1.15rem, 5.9vw, 2rem); }
   .landing-brand .landing-brand-logo { height: clamp(52px, 16vw, 96px); }
   .landing-cards {
     grid-template-columns: 1fr;

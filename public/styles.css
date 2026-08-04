@@ -268,8 +268,8 @@ button.section-link {
 
 .brand {
   font-family: var(--sans);
-  font-weight: 500;
-  letter-spacing: 0.28em;
+  font-weight: 300;
+  letter-spacing: 0.3em;
   font-size: 0.95rem;
   display: inline-flex;
   align-items: center;
@@ -288,14 +288,17 @@ button.section-link {
 }
 /* The condensed scrolled header gets a slightly smaller mark. */
 .site-header.scrolled .brand-logo { height: clamp(52px, 5.5vw, 68px); }
-/* A wordmark the admin has given a face or a size of its own: the wide tracking
-   that suits spaced uppercase would fight a script or a display serif, and the
-   size comes in as --brand-size so the responsive rules can still cap it. */
+/* A wordmark the admin has given a face or a size of its own. It keeps the
+   spaced light caps of the default treatment — that IS the house wordmark, the
+   one the reference layout is drawn around — so the Logo panel chooses the face
+   and the size and nothing else. The size comes in as --brand-size so the
+   responsive rules can still cap it. */
 .brand .brand-name.custom {
   font-size: var(--brand-size, 1.5rem);
-  font-family: var(--serif);
-  letter-spacing: 0.05em;
-  text-transform: none;
+  font-family: var(--sans);
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
   line-height: 1.1;
   white-space: nowrap;
 }
@@ -841,8 +844,16 @@ body.overlay-open { overflow: hidden; }
   letter-spacing: 0.01em;
   display: block;
 }
-/* Admin-chosen face/size, with the shipped size as the fallback. */
-.footer-brand .footer-name.custom { font-size: var(--brand-size, clamp(1.8rem, 4vw, 2.4rem)); }
+/* Admin-chosen face/size, with the shipped size as the fallback. Same spaced
+   light caps as the header, so the name reads as one wordmark site-wide. */
+.footer-brand .footer-name.custom {
+  font-size: var(--brand-size, clamp(1.8rem, 4vw, 2.4rem));
+  font-family: var(--sans);
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  line-height: 1.15;
+}
 .footer-tag {
   margin-top: 0.8rem;
   font-size: 0.72rem;
@@ -1008,8 +1019,10 @@ body.overlay-open { overflow: hidden; }
   .brand .brand-logo { height: 56px; max-width: 58vw; }
   .site-header.scrolled .brand-logo { height: 48px; max-width: 58vw; }
   /* A size picked for the desktop header would overrun a phone, so it is capped
-     against the viewport rather than taken literally. */
-  .brand .brand-name.custom { font-size: min(var(--brand-size, 1.4rem), 6.2vw); }
+     against the viewport rather than taken literally. The cap is tighter than it
+     looks: 0.3em of tracking on 15 letters costs another third of the width, and
+     the menu toggle still needs its corner. */
+  .brand .brand-name.custom { font-size: min(var(--brand-size, 1.4rem), 4.2vw); }
   .menu-toggle { display: flex; position: relative; z-index: 50; }
 
   /* Full-screen branded menu (brand pink) */
@@ -1087,7 +1100,7 @@ body.overlay-open { overflow: hidden; }
   .cf-row { grid-template-columns: 1fr; }
   .contact { padding-left: 1.2rem; padding-right: 1.2rem; }
   .footer-grid { grid-template-columns: 1fr; gap: 2.2rem; }
-  .footer-brand .footer-name.custom { font-size: min(var(--brand-size, 2rem), 11vw); }
+  .footer-brand .footer-name.custom { font-size: min(var(--brand-size, 2rem), 7.5vw); }
   .footer-bottom { flex-direction: column; align-items: flex-start; }
 }
 
