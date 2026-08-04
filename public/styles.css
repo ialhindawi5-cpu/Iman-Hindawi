@@ -47,7 +47,11 @@ a { color: inherit; text-decoration: none; }
   z-index: 50;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* The wordmark used to hold the left end of this bar. With the logo confined
+     to the home page there is only one child left — the nav on a desktop, the
+     menu toggle on a phone — and space-between would park it on the left, so it
+     is sent to the right corner it has always occupied. */
+  justify-content: flex-end;
   padding: 1.6rem clamp(1.5rem, 5vw, 4rem);
   transition: background 0.4s var(--ease), padding 0.4s var(--ease), color 0.4s var(--ease);
   color: #ffffff;
