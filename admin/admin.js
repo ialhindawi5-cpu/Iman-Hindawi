@@ -879,6 +879,99 @@ async function openHistory(page) {
   }
 }
 
+/* ---- what a saved version looked like ----
+   This used to print the record exactly as the API hands it over: keys like
+   "sections.actress", a sixty-character hosting URL for every picture, braces
+   and quotes. Unless you wrote the schema there is nothing in that to read, so
+   pressing View looked like it had done nothing at all.
+
+   Every editable field on this page already carries a name written for the
+   person using it, so the names here are taken from the form itself — whatever
+   a panel calls a field is what its history calls it. */
+function fieldLabel(path, key) {
+  const input = document.querySelector(`[data-path="${path}"], [data-list="${path}"]`);
+  const wrap = input && input.closest('label');
+  if (wrap) {
+    // The label's own words, not the value sitting in the input inside it.
+    const own = Array.from(wrap.childNodes)
+      .filter((n) => n.nodeType === Node.TEXT_NODE)
+      .map((n) => n.textContent)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      // "List items (one per line)" is guidance for someone typing into the
+      // box. Nobody is typing here, so the name alone is enough.
+      .replace(/\s*\([^)]*\)\s*$/, '');
+    if (own) return own;
+  }
+  // Nothing on the page owns this one — a field since renamed, or one a panel
+  // builds at run time. Make the key itself readable instead.
+  return String(key)
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[-_.]+/g, ' ')
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
+const IMAGE_VALUE = /\.(png|jpe?g|webp|gif|svg)(\?|$)/i;
+
+function versionValue(value) {
+  // A picture is shown rather than spelled out: its stored value is a hosting
+  // URL that tells nobody anything about which picture it is.
+  if (typeof value === 'string' && IMAGE_VALUE.test(value)) {
+    const img = el('img', 'history-thumb');
+    img.src = value;
+    img.alt = '';
+    img.loading = 'lazy';
+    return img;
+  }
+  if (Array.isArray(value)) {
+    const ul = el('ul', 'history-list');
+    value.forEach((v) => ul.appendChild(el('li', null, String(v))));
+    return ul;
+  }
+  const text = value == null ? '' : String(value);
+  if (!text.trim()) return el('p', 'history-field-empty', 'Empty');
+  return el('p', 'history-field-value', text);
+}
+
+// Walks the saved record and lays each field out under its own name. A list of
+// records — the live projects, the home-page panels — is numbered, so it is
+// clear which one is being described. Returns how many fields it wrote, which
+// is how the caller knows whether it managed to make sense of the shape.
+function renderVersionFields(node, path, into) {
+  if (node === undefined) return 0;
+
+  if (Array.isArray(node) && node.some((v) => v && typeof v === 'object')) {
+    const base = fieldLabel(path, path.split('.').pop());
+    let written = 0;
+    node.forEach((item, i) => {
+      const group = el('div', 'history-group');
+      group.appendChild(el('h4', 'history-group-title', `${base} ${i + 1}`));
+      const added = renderVersionFields(item, `${path}.${i}`, group);
+      if (added) { into.appendChild(group); written += added; }
+    });
+    return written;
+  }
+
+  // `typeof null` is 'object', so the leading truthiness test is load-bearing:
+  // an empty field must fall through to be shown as empty, not recursed into.
+  // Arrays are excluded too — a plain list of words is one field, and walking
+  // its keys turned the three list items into fields named "0", "1" and "2".
+  if (node && typeof node === 'object' && !Array.isArray(node)) {
+    let written = 0;
+    Object.keys(node).forEach((key) => {
+      written += renderVersionFields(node[key], path ? `${path}.${key}` : key, into);
+    });
+    return written;
+  }
+
+  const row = el('div', 'history-field');
+  row.appendChild(el('span', 'history-field-name', fieldLabel(path, path.split('.').pop())));
+  row.appendChild(versionValue(node));
+  into.appendChild(row);
+  return 1;
+}
+
 function renderHistory(versions, page) {
   const list = $('historyList');
   list.innerHTML = '';
@@ -936,7 +1029,7 @@ function renderHistory(versions, page) {
 
     // The saved wording is fetched only when asked for — the list would be a
     // heavy payload if every version carried its whole snapshot.
-    const body = document.createElement('pre');
+    const body = document.createElement('div');
     body.className = 'history-body';
     body.hidden = true;
     li.appendChild(body);
@@ -949,7 +1042,13 @@ function renderHistory(versions, page) {
           `/api/content/versions/${v.id}?page=${encodeURIComponent(page)}`,
           { headers: authHeaders() }
         );
-        body.textContent = JSON.stringify(slice, null, 2);
+        body.innerHTML = '';
+        // If the record turns out to be a shape this cannot lay out, the raw
+        // version is still shown rather than an empty box — better to be ugly
+        // than to look broken again.
+        if (!renderVersionFields(slice, '', body)) {
+          body.appendChild(el('pre', 'history-raw', JSON.stringify(slice, null, 2)));
+        }
         body.hidden = false;
         viewBtn.textContent = 'Hide';
       } catch (err) {

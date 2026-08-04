@@ -563,11 +563,50 @@ select:focus {
 }
 .history-who { font-size: 0.78rem; color: var(--ink-soft); word-break: break-all; }
 .history-actions { margin-left: auto; display: flex; gap: 0.35rem; }
+/* A saved version, laid out as the fields it is rather than as the record it
+   is stored as: each one under the name its own panel gives it. */
 .history-body {
-  margin-top: 0.6rem; padding: 0.7rem; border-radius: 8px;
+  margin-top: 0.6rem; padding: 0.5rem 0.85rem; border-radius: 8px;
   background: #fdf6f9; border: 1px solid var(--line);
-  font-size: 0.76rem; line-height: 1.45; white-space: pre-wrap; word-break: break-word;
-  max-height: 320px; overflow-y: auto;
+  max-height: 340px; overflow-y: auto;
+}
+.history-field {
+  display: grid;
+  grid-template-columns: minmax(8rem, 11rem) 1fr;
+  gap: 0.25rem 1rem;
+  align-items: start;
+  padding: 0.5rem 0;
+  border-top: 1px solid rgba(94, 18, 51, 0.09);
+}
+.history-field:first-child { border-top: 0; }
+.history-field-name {
+  font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--ink-soft); padding-top: 0.1rem;
+}
+.history-field-value {
+  margin: 0; font-size: 0.85rem; line-height: 1.5;
+  white-space: pre-wrap; word-break: break-word;
+}
+.history-field-empty { margin: 0; font-size: 0.82rem; color: var(--ink-soft); font-style: italic; }
+.history-list { margin: 0; padding-left: 1.1rem; font-size: 0.85rem; line-height: 1.6; }
+.history-thumb {
+  display: block; max-width: 170px; max-height: 105px;
+  border-radius: 6px; border: 1px solid var(--line); object-fit: cover;
+}
+.history-group { margin-top: 0.4rem; padding-top: 0.5rem; border-top: 1px solid rgba(94, 18, 51, 0.16); }
+.history-group-title {
+  margin: 0 0 0.15rem; font-size: 0.75rem; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--accent-dark);
+}
+/* Only reached if a record turns up in a shape the layout above cannot read. */
+.history-raw {
+  margin: 0; font-size: 0.76rem; line-height: 1.45;
+  white-space: pre-wrap; word-break: break-word;
+}
+/* On a phone the name sits above its value rather than beside it — a 8rem
+   column would leave the wording itself about ten characters wide. */
+@media (max-width: 620px) {
+  .history-field { grid-template-columns: 1fr; gap: 0.1rem; }
 }
 .history-empty { color: var(--ink-soft); font-size: 0.86rem; padding: 0.6rem 0; }
 
