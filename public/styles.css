@@ -588,6 +588,22 @@ button.section-link {
   grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
   gap: clamp(1rem, 2vw, 1.6rem);
 }
+/* The cards arrive one after the other, on the same footing as the rest of the
+   overlay: a keyframe with `both`, which finishes at its own end state however
+   the overlay was opened. It fades and does not rise, because a keyframe that
+   held a transform afterwards would sit on top of the hover lift below. The
+   delays run out to six cards and hold there — a seventh arrives with the
+   sixth rather than keeping a visitor waiting on an empty grid. */
+html.js-anim .project-card { animation: card-in 0.55s var(--anim-ease) both; }
+html.js-anim .project-card:nth-child(2) { animation-delay: 0.07s; }
+html.js-anim .project-card:nth-child(3) { animation-delay: 0.14s; }
+html.js-anim .project-card:nth-child(4) { animation-delay: 0.21s; }
+html.js-anim .project-card:nth-child(5) { animation-delay: 0.28s; }
+html.js-anim .project-card:nth-child(n + 6) { animation-delay: 0.35s; }
+@keyframes card-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 .project-card {
   display: block;
   border: 1px solid var(--line);
@@ -1172,6 +1188,14 @@ html.js-anim .site-header { animation: header-in 0.9s var(--anim-ease) 0.15s bot
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .reveal { opacity: 1; transform: none; filter: none; transition: none; }
+  /* anim.js already bows out before adding `js-anim`, so these are a backstop
+     for a visitor who turns the preference on with the page already open. */
+  html.js-anim [data-anim] { opacity: 1; transform: none; transition: none; }
+  html.js-anim .site-header { animation: none; }
+  html.js-anim .project-card { animation: none; }
+  /* !important because the drift is written to the element's own style
+     attribute, which a plain rule here would lose to. */
+  .section-hero-media.has-parallax { transform: none !important; }
   .projects-overlay-inner { animation: none; }
   .scroll-cue span { animation: none; }
   .hero-anim { opacity: 1; transform: none; animation: none; }

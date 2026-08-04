@@ -16,6 +16,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <!-- In the head, before the first paint: the hidden start states in
+       styles.css only exist while this file is running to undo them. -->
+  <script src="anim.js"></script>
 </head>
 <body data-section="entrepreneur">
   <!-- Transparent over the full-bleed picture; the scroll handler gives it a
@@ -43,13 +46,17 @@
           <!-- Named in the nav, as on the reference; the heading stays in the
                page for search and for heading navigation. -->
           <h1 class="visually-hidden" id="entrepreneurTitle">Entrepreneur</h1>
-          <p id="entrepreneurBody"></p>
+          <!-- Rises into place a beat ahead of the links under it, which follow
+               one another, the way the reference brings the copy over its
+               picture in. -->
+          <p id="entrepreneurBody" data-anim="up"></p>
           <div class="section-links">
-            <a href="/contact" class="section-link" id="entrepreneurCta"></a>
+            <a href="/contact" class="section-link" id="entrepreneurCta" data-anim="up" data-anim-delay="140"></a>
             <!-- Opens the live sites over the picture; nothing about them sits
                  on the page itself, so this page stays one screen like the
                  others. -->
             <button type="button" class="section-link" id="liveProjectsBtn"
+                    data-anim="up" data-anim-delay="230"
                     aria-haspopup="dialog" aria-expanded="false" aria-controls="projectsOverlay">
               Live projects
             </button>

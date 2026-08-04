@@ -482,6 +482,12 @@ function initUI() {
     { threshold: 0.15, rootMargin: '0px 0px -8% 0px' }
   );
   document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+
+  // The contact icons are built from the dashboard's content, so they do not
+  // exist when anim.js first looks for things to bring in. This runs in the
+  // same task that drew them, before the browser has painted, so they are
+  // never seen in the state they are about to animate out of.
+  if (window.scanAnim) window.scanAnim();
 }
 
 // Load data first, then wire up the UI/animations.

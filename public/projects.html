@@ -16,6 +16,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <!-- In the head, before the first paint: the hidden start states in
+       styles.css only exist while this file is running to undo them. -->
+  <script src="anim.js"></script>
 </head>
 <body data-section="actress">
   <!-- Transparent over the full-bleed picture; the scroll handler gives it a
@@ -43,11 +46,13 @@
           <!-- Named in the nav, as on the reference; the heading stays in the
                page for search and for heading navigation. -->
           <h1 class="visually-hidden" id="actressTitle">Project Management</h1>
-          <p id="actressBody"></p>
+          <!-- Rises into place a beat ahead of the link under it, the way the
+               reference brings the copy over its picture in. -->
+          <p id="actressBody" data-anim="up"></p>
           <!-- One button, as on the reference. Its words and where it goes are
                both set in the dashboard; the href here is the fallback. -->
           <div class="section-links">
-            <a href="/contact" class="section-link" id="actressCta"></a>
+            <a href="/contact" class="section-link" id="actressCta" data-anim="up" data-anim-delay="140"></a>
           </div>
         </div>
       </div>

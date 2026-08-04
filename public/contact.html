@@ -16,6 +16,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <!-- In the head, before the first paint: the hidden start states in
+       styles.css only exist while this file is running to undo them. -->
+  <script src="anim.js"></script>
 </head>
 <body>
   <header class="site-header static" id="header">
@@ -36,12 +39,16 @@
   <main class="page">
     <!-- The intro paragraph opens the Project Management page instead. -->
     <section class="contact" id="contact">
-      <div class="reveal">
-        <p class="eyebrow light" id="contactEyebrow"></p>
-        <h1 id="contactHeading">Let’s work together</h1>
-        <p class="contact-sub" id="contactSub"></p>
+      <!-- The block used to arrive as one piece. It now comes in the order it
+           is read, on the same rise the section pages use, and the form's own
+           rows carry on the count from where the heading left off. -->
+      <div>
+        <p class="eyebrow light" id="contactEyebrow" data-anim="up"></p>
+        <h1 id="contactHeading" data-anim="up" data-anim-delay="80">Let’s work together</h1>
+        <p class="contact-sub" id="contactSub" data-anim="up" data-anim-delay="170"></p>
 
-        <form class="contact-form" id="contactForm" novalidate>
+        <form class="contact-form" id="contactForm" novalidate
+              data-anim-children="70" data-anim-delay="260">
           <div class="cf-row">
             <input type="text" name="name" id="cfName" placeholder="Your name" required />
             <input type="email" name="email" id="cfEmail" placeholder="Your email" required />
@@ -49,14 +56,20 @@
           <input type="tel" name="phone" id="cfPhone" class="cf-phone" placeholder="Your phone number" required />
           <textarea name="message" id="cfMessage" rows="5" placeholder="Your message" required></textarea>
           <button type="submit" id="cfSubmit">Send message</button>
-          <p class="cf-status" id="cfStatus" role="status"></p>
+          <!-- Left out of the stagger: it is empty until the form has been
+               sent, so it has no height to be noticed by and would still be
+               hidden at the one moment it matters. -->
+          <p class="cf-status" id="cfStatus" role="status" data-anim-skip></p>
         </form>
       </div>
     </section>
 
     <!-- In place of the footer: the same circled icons as the home page, built
-         from the socials and the address under Settings → Contact info. -->
-    <nav class="social-circles" id="socialCircles" aria-label="Contact and social links"></nav>
+         from the socials and the address under Settings → Contact info. The
+         icons are drawn from the dashboard's content, so the stagger is asked
+         for on the row and handed out to whatever ends up inside it. -->
+    <nav class="social-circles" id="socialCircles" aria-label="Contact and social links"
+         data-anim-children="80"></nav>
   </main>
 
   <script src="brand-fonts.js"></script>
