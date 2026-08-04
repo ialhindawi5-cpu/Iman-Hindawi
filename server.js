@@ -1603,6 +1603,24 @@ app.get('/data', (_req, res) => res.redirect(308, '/entrepreneur'));
 app.get('/web', (_req, res) => res.redirect(308, '/iman-lifestyle'));
 app.use('/', express.static(path.join(__dirname, 'public')));
 
+// ---------- Nothing matched: the site's own 404 ----------
+// Anything that reaches here is an address the site does not have. It must
+// answer 404 rather than 200, or a search engine files the wrong address as a
+// real page. The API answers in the language its callers speak; a browser gets
+// the page. On Vercel the same file is served by a route in vercel.json, so a
+// wrong address costs nothing — this covers running the server directly, and
+// any path that reaches the function anyway.
+app.use((req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  res.status(404);
+  res.setHeader('Cache-Control', 'no-store');
+  res.sendFile(path.join(__dirname, 'public', '404.html'), (err) => {
+    if (err && !res.headersSent) res.type('text/plain').send('Page not found');
+  });
+});
+
 // ---------- Error handler (never leak stack traces) ----------
 app.use((err, req, res, next) => {
   if (err) {

@@ -961,6 +961,78 @@ body.overlay-open { overflow: hidden; }
 }
 .footer-top-link:hover { color: #fff; }
 
+/* ---------- Page not found ----------
+   The reference's arrangement — a very large numeral, the words under it, then
+   a pill back to the front page — in the site's own colours and faces. The
+   numeral is set in the bold grotesque the photographs use rather than in the
+   display serif: at this size the serif's thin strokes go to wire, and the
+   reference's own numeral is a heavy sans. */
+.notfound {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: clamp(6rem, 14vh, 9rem) clamp(1.5rem, 5vw, 4rem) clamp(3rem, 8vh, 5rem);
+}
+.notfound-code {
+  font-family: var(--photo-sans);
+  font-weight: 700;
+  /* Big enough to be the page, capped so it cannot outgrow a narrow screen. */
+  font-size: clamp(6rem, 22vw, 15rem);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+.notfound-title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 5.2vw, 3.4rem);
+  line-height: 1.1;
+  margin-top: clamp(0.6rem, 1.6vw, 1.1rem);
+}
+.notfound-sub {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  max-width: 30rem;
+  margin-top: 0.9rem;
+}
+/* The pill from the reference, in the site's pink rather than its coral. */
+.notfound-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: clamp(1.8rem, 4vw, 2.6rem);
+  padding: 0.7rem 0.7rem 0.7rem 1.6rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #ffffff;
+  font-family: var(--photo-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: background 0.35s var(--ease), transform 0.35s var(--ease),
+    box-shadow 0.35s var(--ease);
+}
+.notfound-back:hover {
+  background: var(--ink);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 34px -20px rgba(94, 18, 51, 0.75);
+}
+.notfound-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  transition: transform 0.35s var(--ease);
+}
+.notfound-back:hover .notfound-arrow { transform: translateX(3px); }
+
 /* ---------- Fade in from bottom (every page but the home page) ----------
    The reference site's one gesture: a piece of copy fades in while rising
    about 75px, each piece a beat behind the one above it. Its easing is a plain
