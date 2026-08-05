@@ -590,10 +590,15 @@ button.section-link {
 }
 /* The cards arrive one after the other, on the same footing as the rest of the
    overlay: a keyframe with `both`, which finishes at its own end state however
-   the overlay was opened. It fades and does not rise, because a keyframe that
-   held a transform afterwards would sit on top of the hover lift below. The
-   delays run out to six cards and hold there — a seventh arrives with the
-   sixth rather than keeping a visitor waiting on an empty grid. */
+   the overlay was opened. The delays run out to six cards and hold there — a
+   seventh arrives with the sixth rather than keeping a visitor waiting on an
+   empty grid.
+
+   The rise is written as `translate`, not inside a `transform`. An animation
+   with `both` keeps its final value and outranks a normal rule, so a keyframe
+   ending in `transform: none` would have sat on top of the hover lift below and
+   killed it. `translate` is its own property, so the arrival and the hover no
+   longer share one. */
 html.js-anim .project-card { animation: card-in 0.55s var(--anim-ease) both; }
 html.js-anim .project-card:nth-child(2) { animation-delay: 0.07s; }
 html.js-anim .project-card:nth-child(3) { animation-delay: 0.14s; }
@@ -601,8 +606,8 @@ html.js-anim .project-card:nth-child(4) { animation-delay: 0.21s; }
 html.js-anim .project-card:nth-child(5) { animation-delay: 0.28s; }
 html.js-anim .project-card:nth-child(n + 6) { animation-delay: 0.35s; }
 @keyframes card-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; translate: 0 14px; }
+  to { opacity: 1; translate: 0 0; }
 }
 .project-card {
   display: block;
@@ -624,6 +629,11 @@ html.js-anim .project-card:nth-child(n + 6) { animation-delay: 0.35s; }
   background-size: cover;
   background-position: center top;
   border-bottom: 1px solid var(--line);
+  /* Grown from the top edge, because the shot is anchored there — scaling from
+     the middle would walk the header of the captured page out of frame. The
+     card already clips, so the growth is contained. */
+  transform-origin: center top;
+  transition: transform 0.6s var(--ease);
 }
 .project-card-foot {
   display: flex;
@@ -644,12 +654,23 @@ html.js-anim .project-card:nth-child(n + 6) { animation-delay: 0.35s; }
   color: var(--ink-soft);
   transition: color 0.4s var(--ease);
 }
+/* The arrow is drawn here rather than sitting in the label text so it can move
+   on its own. Both the static markup and the admin-built cards carry the words
+   only, so the two agree and neither ends up with two arrows. */
+.project-card-go::after {
+  content: "↗";
+  display: inline-block;
+  margin-left: 0.45em;
+  transition: transform 0.4s var(--ease);
+}
 .project-card:hover {
   border-color: rgba(94, 18, 51, 0.4);
   box-shadow: 0 24px 50px -30px rgba(94, 18, 51, 0.5);
   transform: translateY(-3px);
 }
 .project-card:hover .project-card-go { color: var(--ink); }
+.project-card:hover .project-card-go::after { transform: translate(3px, -3px); }
+.project-card:hover .project-card-shot { transform: scale(1.04); }
 .project-card:focus-visible,
 .projects-overlay-close:focus-visible {
   outline: 2px solid var(--ink);
@@ -1265,6 +1286,13 @@ html.js-anim .site-header { animation: header-in 0.9s var(--anim-ease) 0.15s bot
   html.js-anim [data-anim] { opacity: 1; transform: none; transition: none; }
   html.js-anim .site-header { animation: none; }
   html.js-anim .project-card { animation: none; }
+  /* The hover motion goes too: the zoom and the arrow are movement a visitor
+     asked not to see. The colour and shadow changes stay, so hover still
+     answers. */
+  .project-card-shot,
+  .project-card-go::after { transition: none; }
+  .project-card:hover .project-card-shot,
+  .project-card:hover .project-card-go::after { transform: none; }
   /* !important because the drift is written to the element's own style
      attribute, which a plain rule here would lose to. */
   .section-hero-media.has-parallax { transform: none !important; }

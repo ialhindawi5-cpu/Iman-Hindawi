@@ -1440,7 +1440,9 @@ function renderPage(file, section, c, opts) {
       return `<a class="project-card" href="${esc(href)}" target="_blank" rel="noopener">`
         + `<span class="project-card-shot" style="background-image:url(&quot;${esc(p.image)}&quot;)"></span>`
         + `<span class="project-card-foot"><span class="project-card-name">${esc(p.title || 'Project')}</span>`
-        + '<span class="project-card-go">View live project ↗</span></span></a>';
+        // The arrow is drawn by styles.css in ::after so it can move on hover —
+        // keep it out of the text here, or the card shows two of them.
+        + '<span class="project-card-go">View live project</span></span></a>';
     }).join(''));
   }
 

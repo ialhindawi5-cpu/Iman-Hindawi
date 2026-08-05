@@ -275,7 +275,8 @@ function renderProjects(projects) {
 
     const go = document.createElement('span');
     go.className = 'project-card-go';
-    go.textContent = 'View live project ↗';
+    // No arrow here — styles.css draws it in ::after so it can move on hover.
+    go.textContent = 'View live project';
     foot.appendChild(go);
 
     card.appendChild(foot);
