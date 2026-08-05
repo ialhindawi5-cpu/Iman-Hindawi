@@ -1228,7 +1228,10 @@ app.delete('/api/messages/:id', requireAuth, async (req, res) => {
 // content is written into the HTML here, before it is sent, and the client-side
 // hydrate() then writes the identical values over the top.
 const SITE_URL = (process.env.SITE_URL || 'https://iman-hindawi.vercel.app').replace(/\/$/, '');
-const OG_IMAGE = `${SITE_URL}/og-image.png`;
+// The version tag is bumped whenever the picture itself is redrawn. The file
+// name has to stay put (it is a plain static asset), so without it a chat app
+// or a CDN that already has the old card keeps serving it indefinitely.
+const OG_IMAGE = `${SITE_URL}/og-image.png?v=2`;
 
 const PAGES_SEO = [
   { path: '/', file: 'index.html', section: null },
