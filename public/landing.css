@@ -88,8 +88,9 @@
   overflow: hidden;
   color: #ffffff;
   background: #f2e3ea;
-  transition: transform 0.55s var(--ease), box-shadow 0.55s var(--ease);
-  will-change: transform;
+  /* The card itself never moves — on the reference it is the picture inside
+     that responds to the cursor, so the panel edges and their neighbours stay
+     exactly where they are. See `.landing-card-media` below. */
   /* On the reference the panel width tracks the window but the height barely
      moves — 427 x 499 at a 1440px window, 575 x 515 at ~1885px. So the height is
      the 499/427 = 116.86% ratio up to the point it reaches 515px, and 515px from
@@ -103,11 +104,21 @@
 }
 .landing-card-media {
   position: absolute;
+  /* Flush with the panel. An earlier version sat at -6% on every side to leave
+     room for the picture to drift toward the cursor, but nothing ever wrote the
+     offsets that drift needs, so all the overhang did was crop 12% off every
+     photograph for good — which is why the three of them stopped matching. */
   inset: 0;
   background-color: #e9d3dd;
-  background-position: center;
+  /* The panels take whatever is uploaded in the admin, and those files share no
+     aspect ratio — a square phone photo next to a 3:4 portrait. `cover` scales
+     each until it fills the panel, so every picture reads at the same size in
+     the row and only its crop differs. Held a little above centre because these
+     are portraits and the face sits in the upper half. */
+  background-position: center 42%;
   background-size: cover;
-  transition: transform 0.9s var(--ease), filter 0.55s var(--ease);
+  transition: transform 0.65s var(--ease);
+  will-change: transform;
 }
 /* Placeholder tint for a card with no picture uploaded yet. */
 .landing-card:not(.has-image) .landing-card-media {
@@ -148,12 +159,17 @@
 
 /* Hover lifts the card clear of its neighbours, as on the reference layout. */
 @media (hover: hover) {
+  .landing-card {
+    transition: transform 0.55s var(--ease), box-shadow 0.55s var(--ease);
+  }
   .landing-card:hover {
-    transform: scale(1.045);
+    transform: scale(1.03);
     box-shadow: 0 30px 70px rgba(0, 0, 0, 0.28);
     z-index: 3;
   }
-  .landing-card:hover .landing-card-media { transform: scale(1.06); }
+  /* The panel lifts; the picture inside it holds still. Scaling the media as
+     well multiplied against the panel's own scale into an ~11% jump, so the
+     photograph re-cropped itself every time the cursor crossed it. */
 }
 .landing-card:focus-visible {
   outline: 2px solid var(--ink);

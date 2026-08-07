@@ -1182,6 +1182,14 @@ html.js-anim .site-header { animation: header-in 0.9s var(--anim-ease) 0.15s bot
     border-color: transparent;
   }
   .cursor-hover .cursor-dot { transform: translate(-50%, -50%) scale(0); }
+  /* The home page is three photographs laid edge to edge, and the filled ring
+     sitting on one of them reads as a patch of the picture going pale rather
+     than as a cursor. There it grows the same way but stays an outline, so
+     nothing is ever laid over the photograph. */
+  .cursor-hover.landing-body .cursor-ring {
+    background: transparent;
+    border-color: rgba(229, 122, 164, 0.9);
+  }
 }
 
 /* ---------- Responsive ---------- */
